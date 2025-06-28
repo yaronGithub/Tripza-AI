@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TripPlanningForm } from '../components/TripPlanningForm';
-import { ItineraryDisplay } from '../components/ItineraryDisplay';
+import { EnhancedItineraryDisplay } from '../components/EnhancedItineraryDisplay';
 import { AuthModal } from '../components/AuthModal';
 import { TripFormData, Trip } from '../types';
 import { generateItinerary } from '../utils/itinerary';
@@ -114,7 +114,7 @@ export function CreateTripPage() {
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       {currentTrip ? (
-        <ItineraryDisplay
+        <EnhancedItineraryDisplay
           trip={currentTrip}
           onEdit={handleEditTrip}
           onSave={handleSaveTrip}
