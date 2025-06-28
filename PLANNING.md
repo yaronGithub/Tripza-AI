@@ -1,7 +1,7 @@
-# TripCraft - Trip Planning Application
+# Tripza AI - Smart Travel Planning Application
 
 ## Project Vision
-TripCraft is a sophisticated, AI-powered trip planning application designed to generate personalized travel itineraries with intelligent route optimization. The application aims to solve the common problem of overwhelming trip planning by providing curated, geographically optimized daily itineraries based on user preferences.
+Tripza AI is a sophisticated, AI-powered trip planning application designed to generate personalized travel itineraries with intelligent route optimization. The application aims to solve the common problem of overwhelming trip planning by providing curated, geographically optimized daily itineraries based on user preferences.
 
 ## Architecture Overview
 
@@ -13,19 +13,21 @@ TripCraft is a sophisticated, AI-powered trip planning application designed to g
 - **Icons**: Lucide React for consistent iconography
 
 ### Data Architecture
-- **MVP Storage**: Local Storage for user data and saved plans
-- **Future Backend**: Node.js with Express and PostgreSQL for production scalability
-- **Authentication**: Custom JWT-based auth system
-- **Maps Integration**: Leaflet/OpenStreetMap for map display and route visualization
+- **Database**: Supabase for user data, trips, and attractions
+- **Authentication**: Supabase Auth for secure user management
+- **AI Integration**: OpenAI GPT-4o-mini for intelligent trip descriptions
+- **Maps Integration**: Google Maps API with Leaflet/OpenStreetMap fallback
+- **Image Services**: Unsplash and Pexels APIs for beautiful travel imagery
 
 ### Key Technical Decisions
-1. **Client-Side First**: MVP prioritizes client-side functionality for rapid development
+1. **AI-First Approach**: OpenAI integration for personalized content generation
 2. **Component-Driven**: Modular React components for maintainability
 3. **Mobile-First Design**: Responsive design starting from mobile viewports
 4. **Progressive Enhancement**: Core features work offline, enhanced features require network
+5. **Real-time Data**: Multiple API integrations for comprehensive attraction data
 
 ## Long-Term Goals
-1. **AI Integration**: Machine learning for personalized recommendations
+1. **Advanced AI Integration**: Machine learning for personalized recommendations
 2. **Social Features**: Community sharing and collaborative planning
 3. **Real-Time Updates**: Live attraction data and crowd information
 4. **Mobile App**: Native iOS/Android applications
@@ -36,3 +38,4 @@ TripCraft is a sophisticated, AI-powered trip planning application designed to g
 - **Plan Quality**: User satisfaction with generated itineraries
 - **Sharing Activity**: Number of plans shared and viewed
 - **Retention**: Users returning to create multiple trips
+- **AI Effectiveness**: Quality of AI-generated descriptions and recommendations

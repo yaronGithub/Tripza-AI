@@ -37,7 +37,7 @@ export function HomePage({ onNavigateToCreate }: HomePageProps) {
     {
       name: 'Sarah Chen',
       location: 'San Francisco, CA',
-      text: 'TripCraft planned my entire European adventure in minutes. The AI recommendations were spot-on and the route optimization saved me hours!',
+      text: 'Tripza AI planned my entire European adventure in minutes. The AI recommendations were spot-on and the route optimization saved me hours!',
       rating: 5,
       avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
     },
@@ -89,8 +89,8 @@ export function HomePage({ onNavigateToCreate }: HomePageProps) {
             </h1>
             
             <p className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed">
-              Experience the future of travel planning with AI-powered itineraries, real-time Google Maps integration, 
-              and intelligent route optimization that creates perfect trips in seconds, not hours.
+              Experience the future of travel planning with Tripza AI's intelligent itineraries, real-time Google Maps integration, 
+              and smart route optimization that creates perfect trips in seconds, not hours.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
@@ -141,7 +141,7 @@ export function HomePage({ onNavigateToCreate }: HomePageProps) {
               Powered by Advanced AI
             </div>
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Why TripCraft Changes Everything
+              Why Tripza AI Changes Everything
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Experience the next generation of travel planning with cutting-edge AI technology and real-time integrations

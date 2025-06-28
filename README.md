@@ -1,17 +1,17 @@
-# TripCraft 🗺️
+# Tripza AI 🗺️
 
-A sophisticated trip planning application that generates personalized travel itineraries with intelligent route optimization.
+A sophisticated AI-powered trip planning application that generates personalized travel itineraries with intelligent route optimization.
 
 ## Features
 
 ### Core Functionality
-- **Smart Itinerary Generation**: AI-powered daily plans based on your preferences
+- **Smart AI Itinerary Generation**: OpenAI-powered daily plans based on your preferences
 - **Interactive Maps**: Visual route planning with optimized paths
 - **Preference Matching**: Customize trips based on attraction types you love
 - **Route Optimization**: Minimize travel time with geographic clustering
 - **User Authentication**: Secure accounts for saving and sharing plans
 
-### Advanced Features (Roadmap)
+### Advanced Features
 - **Plan Sharing**: Share trips publicly or with specific users
 - **Collaborative Planning**: Work together on group trips
 - **Real-time Updates**: Live attraction data and recommendations
@@ -27,8 +27,8 @@ A sophisticated trip planning application that generates personalized travel iti
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/tripcraft.git
-cd tripcraft
+git clone https://github.com/yourusername/tripza-ai.git
+cd tripza-ai
 ```
 
 2. Install dependencies:
@@ -56,7 +56,7 @@ npm run preview
 
 1. **Enter Trip Details**: Specify your destination and travel dates
 2. **Select Preferences**: Choose attraction types that interest you
-3. **Generate Itinerary**: Let TripCraft create your optimized daily plans
+3. **Generate Itinerary**: Let Tripza AI create your optimized daily plans
 4. **View on Map**: See your attractions and routes visualized
 5. **Save & Share**: Keep your plans and share with friends
 
@@ -70,7 +70,9 @@ npm run preview
 ## Technologies Used
 
 - **Frontend**: React 18, TypeScript, Tailwind CSS
-- **Maps**: Leaflet with OpenStreetMap
+- **AI Integration**: OpenAI GPT-4o-mini for intelligent planning
+- **Maps**: Google Maps API with Leaflet fallback
+- **Database**: Supabase for user data and trip storage
 - **Icons**: Lucide React
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS with custom design system
@@ -84,6 +86,7 @@ src/
 ├── hooks/              # Custom React hooks
 ├── types/              # TypeScript type definitions
 ├── utils/              # Utility functions
+├── services/           # API services and integrations
 ├── data/               # Mock data and constants
 └── styles/             # Global styles and themes
 ```
@@ -106,15 +109,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- OpenStreetMap for map data
+- OpenAI for AI-powered trip planning
+- Google Maps for mapping and directions
+- Unsplash and Pexels for beautiful travel images
 - Lucide for beautiful icons
 - The React and Tailwind CSS communities
 
 ## Contact
 
-- Project Homepage: [https://tripcraft.app](https://tripcraft.app)
-- Report Issues: [GitHub Issues](https://github.com/yourusername/tripcraft/issues)
-- Email: support@tripcraft.app
+- Project Homepage: [https://tripza.ai](https://tripza.ai)
+- Report Issues: [GitHub Issues](https://github.com/yourusername/tripza-ai/issues)
+- Email: support@tripza.ai
 
 ---
 

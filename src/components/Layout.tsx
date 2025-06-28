@@ -49,9 +49,9 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
               </div>
               <div>
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-orange-500 bg-clip-text text-transparent">
-                  TripCraft
+                  Tripza AI
                 </span>
-                <div className="text-xs text-gray-500 font-medium">AI-Powered</div>
+                <div className="text-xs text-gray-500 font-medium">Smart Travel</div>
               </div>
             </div>
 
@@ -223,7 +223,7 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-600 via-purple-600 to-orange-500 rounded-xl flex items-center justify-center">
                   <Map className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-2xl font-bold">TripCraft</span>
+                <span className="text-2xl font-bold">Tripza AI</span>
               </div>
               <p className="text-gray-300 mb-4 max-w-md">
                 The world's most advanced AI-powered trip planning platform. Create perfect itineraries in seconds with real-time data and intelligent optimization.
@@ -268,7 +268,7 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
 
           <div className="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2025 TripCraft. All rights reserved. Powered by AI.
+              © 2025 Tripza AI. All rights reserved. Powered by AI.
             </div>
             <div className="text-gray-400 text-sm">
               Made with ❤️ for travelers worldwide

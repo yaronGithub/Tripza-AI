@@ -1,10 +1,10 @@
-# TripCraft Demo Script 🎯
+# Tripza AI Demo Script 🎯
 
 ## Demo Overview (5-7 minutes)
 **Hook**: "Planning a trip shouldn't take longer than the trip itself."
 
 ## Opening (30 seconds)
-> "Hi everyone! I'm here to show you TripCraft - the trip planning app that turns the overwhelming task of itinerary creation into an intelligent, personalized experience. Instead of spending hours researching and organizing, our users get optimized daily plans in minutes."
+> "Hi everyone! I'm here to show you Tripza AI - the smart travel planning app that turns the overwhelming task of itinerary creation into an intelligent, personalized experience. Instead of spending hours researching and organizing, our users get optimized daily plans in minutes."
 
 ## Problem Statement (30 seconds)
 > "We've all been there - you want to visit a new city, but planning feels like a full-time job. You're juggling multiple websites, trying to figure out which attractions to visit, how to group them efficiently, and creating a logical route. Most people either over-plan and stress, or under-plan and miss out."
@@ -12,7 +12,7 @@
 ## Solution Demo (4-5 minutes)
 
 ### 1. Trip Creation (90 seconds)
-> "Let me show you how TripCraft solves this. I'm planning a 3-day trip to San Francisco."
+> "Let me show you how Tripza AI solves this. I'm planning a 3-day trip to San Francisco."
 
 **Actions:**
 - Open the application
@@ -20,12 +20,12 @@
 - Enter "San Francisco, CA" as destination
 - Select dates (e.g., next weekend)
 - Choose preferences: "Museums & Galleries", "Parks & Nature", "Restaurants & Foodie Spots", "Historical Sites"
-- Click "Generate Itinerary"
+- Click "Generate My AI-Powered Itinerary"
 
 > "Notice how clean and intuitive the interface is - we designed this for travelers, not travel agents."
 
 ### 2. Generated Itinerary (60 seconds)
-> "In seconds, TripCraft has created a geographically optimized 3-day itinerary."
+> "In seconds, Tripza AI has created a geographically optimized 3-day itinerary."
 
 **Highlight:**
 - Day 1: Golden Gate area attractions
@@ -66,13 +66,13 @@
 - Demonstrate saved trips dashboard
 
 ## Value Proposition (30 seconds)
-> "TripCraft takes what used to be hours of research and planning and turns it into a 5-minute, intelligent process. We're not just showing you attractions - we're creating optimized experiences."
+> "Tripza AI takes what used to be hours of research and planning and turns it into a 5-minute, intelligent process. We're not just showing you attractions - we're creating optimized experiences."
 
 ## Future Vision & Closing (30 seconds)
-> "We're already working on collaborative planning for groups, real-time updates, and AI-powered personalization that learns from your preferences. But even today, TripCraft saves travelers time while helping them discover more."
+> "We're already working on collaborative planning for groups, real-time updates, and AI-powered personalization that learns from your preferences. But even today, Tripza AI saves travelers time while helping them discover more."
 
 **Call to Action:**
-> "Try TripCraft for your next trip - because life's too short for bad itineraries."
+> "Try Tripza AI for your next trip - because life's too short for bad itineraries."
 
 ## Technical Talking Points (If Asked)
 
@@ -81,10 +81,10 @@
 - "Route optimization using geographic clustering algorithms"
 - "Responsive design that works perfectly on mobile"
 
-### Scalability
-- "Designed with microservices architecture in mind"
-- "Currently using efficient client-side processing"
-- "Ready to integrate with real-time attraction APIs"
+### AI Integration
+- "Powered by OpenAI GPT-4o-mini for intelligent descriptions"
+- "Real-time attraction data from multiple APIs"
+- "Smart route optimization algorithms"
 
 ## Demo Backup Plans
 
@@ -105,10 +105,10 @@
 ## Questions Preparation
 
 **Q: "How do you get attraction data?"**
-A: "Great question! Currently using curated datasets, with plans to integrate multiple APIs for real-time information."
+A: "Great question! We integrate with multiple APIs including Google Places, Foursquare, and OpenStreetMap for comprehensive real-time information."
 
 **Q: "What makes this different from Google Trips or TripAdvisor?"**
-A: "Focused specifically on intelligent route optimization and personalized daily planning, not just attraction discovery."
+A: "Focused specifically on intelligent route optimization and AI-powered personalized daily planning, not just attraction discovery."
 
 **Q: "How do you monetize?"**
 A: "Freemium model with premium features like collaborative planning, advanced customization, and integration with booking platforms."
