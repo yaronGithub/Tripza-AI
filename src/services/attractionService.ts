@@ -1,4 +1,5 @@
 import { Attraction } from '../types';
+import { imageService } from './imageService';
 
 // External APIs for attraction data
 const FOURSQUARE_API_KEY = import.meta.env.VITE_FOURSQUARE_API_KEY;
@@ -58,15 +59,39 @@ export class AttractionService {
       ]);
 
       // Combine and deduplicate results
-      const combined = this.combineAndDeduplicate(attractions.flat());
+      let combined = this.combineAndDeduplicate(attractions.flat());
+      
+      // If we don't have enough attractions, generate fallback ones
+      if (combined.length < 10) {
+        const fallbackAttractions = await this.generateFallbackAttractions(destination, preferences, limit - combined.length);
+        combined = [...combined, ...fallbackAttractions];
+      }
+
+      // Enhance all attractions with beautiful images
+      const enhancedAttractions = await Promise.all(
+        combined.map(async (attraction) => {
+          if (!attraction.imageUrl) {
+            try {
+              attraction.imageUrl = await imageService.getAttractionImage(
+                attraction.name, 
+                destination, 
+                attraction.type
+              );
+            } catch (error) {
+              console.error('Error getting image for attraction:', error);
+            }
+          }
+          return attraction;
+        })
+      );
       
       // Cache the results
-      this.cache.set(cacheKey, combined);
+      this.cache.set(cacheKey, enhancedAttractions);
       
-      return combined;
+      return enhancedAttractions;
     } catch (error) {
       console.error('Error fetching attractions:', error);
-      // Fallback to generated attractions
+      // Fallback to generated attractions with images
       return this.generateFallbackAttractions(destination, preferences, limit);
     }
   }
@@ -202,20 +227,20 @@ export class AttractionService {
     return `${lat - latDelta},${lng - lngDelta},${lat + latDelta},${lng + lngDelta}`;
   }
 
-  private generateFallbackAttractions(destination: string, preferences: string[], limit: number): Attraction[] {
+  private async generateFallbackAttractions(destination: string, preferences: string[], limit: number): Promise<Attraction[]> {
     // Generate realistic attractions based on destination and preferences
     const attractions: Attraction[] = [];
     const baseCoords = this.getApproximateCoordinates(destination);
     
-    preferences.forEach((preference, prefIndex) => {
-      const attractionsForType = this.generateAttractionsForType(
+    for (const preference of preferences) {
+      const attractionsForType = await this.generateAttractionsForType(
         destination, 
         preference, 
         baseCoords, 
         Math.ceil(limit / preferences.length)
       );
       attractions.push(...attractionsForType);
-    });
+    }
 
     return attractions.slice(0, limit);
   }
@@ -232,23 +257,28 @@ export class AttractionService {
       'berlin': {lat: 52.5200, lng: 13.4050},
       'madrid': {lat: 40.4168, lng: -3.7038},
       'vienna': {lat: 48.2082, lng: 16.3738},
-      'prague': {lat: 50.0755, lng: 14.4378}
+      'prague': {lat: 50.0755, lng: 14.4378},
+      'san francisco': {lat: 37.7749, lng: -122.4194},
+      'new york': {lat: 40.7128, lng: -74.0060},
+      'los angeles': {lat: 34.0522, lng: -118.2437},
+      'chicago': {lat: 41.8781, lng: -87.6298},
+      'miami': {lat: 25.7617, lng: -80.1918}
     };
 
-    const key = destination.toLowerCase();
+    const key = destination.toLowerCase().replace(/[^a-z\s]/g, '').trim();
     return cityCoords[key] || {lat: 40.7128, lng: -74.0060}; // Default to NYC
   }
 
-  private generateAttractionsForType(
+  private async generateAttractionsForType(
     destination: string, 
     type: string, 
     baseCoords: {lat: number, lng: number}, 
     count: number
-  ): Attraction[] {
+  ): Promise<Attraction[]> {
     const attractions: Attraction[] = [];
     
     for (let i = 0; i < count; i++) {
-      attractions.push({
+      const attraction: Attraction = {
         id: `generated-${Date.now()}-${Math.random()}`,
         name: this.generateAttractionName(destination, type, i),
         type,
@@ -258,8 +288,17 @@ export class AttractionService {
         estimatedDuration: this.getTypicalDuration(type),
         rating: 3.5 + Math.random() * 1.5, // 3.5-5.0 rating
         address: `${destination}, ${this.generateAddress()}`,
-        imageUrl: this.getPlaceholderImage(type)
-      });
+        imageUrl: '' // Will be populated by imageService
+      };
+
+      // Get beautiful image for this attraction
+      try {
+        attraction.imageUrl = await imageService.getAttractionImage(attraction.name, destination, type);
+      } catch (error) {
+        console.error('Error getting image for generated attraction:', error);
+      }
+
+      attractions.push(attraction);
     }
 
     return attractions;
@@ -267,15 +306,15 @@ export class AttractionService {
 
   private generateAttractionName(destination: string, type: string, index: number): string {
     const templates = {
-      'Parks & Nature': [`${destination} Central Park`, `${destination} Botanical Garden`, `${destination} Nature Reserve`],
-      'Museums & Galleries': [`${destination} Art Museum`, `${destination} History Museum`, `${destination} Modern Gallery`],
-      'Historical Sites': [`${destination} Cathedral`, `${destination} Old Town`, `${destination} Historic District`],
-      'Shopping Districts': [`${destination} Shopping Center`, `${destination} Market Square`, `${destination} Fashion District`],
-      'Restaurants & Foodie Spots': [`${destination} Food Market`, `Local ${destination} Cuisine`, `${destination} Culinary District`],
-      'Nightlife': [`${destination} Entertainment District`, `${destination} Night Market`, `${destination} Cultural Quarter`],
-      'Family-Friendly': [`${destination} Family Park`, `${destination} Adventure Center`, `${destination} Discovery Zone`],
-      'Adventure & Outdoors': [`${destination} Adventure Park`, `${destination} Outdoor Center`, `${destination} Sports Complex`],
-      'Art & Culture': [`${destination} Cultural Center`, `${destination} Arts District`, `${destination} Heritage Site`]
+      'Parks & Nature': [`${destination} Central Park`, `${destination} Botanical Garden`, `${destination} Nature Reserve`, `${destination} Waterfront Park`, `${destination} Scenic Gardens`],
+      'Museums & Galleries': [`${destination} Art Museum`, `${destination} History Museum`, `${destination} Modern Gallery`, `${destination} Cultural Center`, `${destination} Heritage Museum`],
+      'Historical Sites': [`${destination} Cathedral`, `${destination} Old Town`, `${destination} Historic District`, `${destination} Ancient Quarter`, `${destination} Heritage Site`],
+      'Shopping Districts': [`${destination} Shopping Center`, `${destination} Market Square`, `${destination} Fashion District`, `${destination} Artisan Quarter`, `${destination} Grand Bazaar`],
+      'Restaurants & Foodie Spots': [`${destination} Food Market`, `Local ${destination} Cuisine`, `${destination} Culinary District`, `${destination} Gourmet Quarter`, `${destination} Food Hall`],
+      'Nightlife': [`${destination} Entertainment District`, `${destination} Night Market`, `${destination} Cultural Quarter`, `${destination} Music District`, `${destination} Arts Quarter`],
+      'Family-Friendly': [`${destination} Family Park`, `${destination} Adventure Center`, `${destination} Discovery Zone`, `${destination} Fun Center`, `${destination} Activity Park`],
+      'Adventure & Outdoors': [`${destination} Adventure Park`, `${destination} Outdoor Center`, `${destination} Sports Complex`, `${destination} Recreation Area`, `${destination} Activity Hub`],
+      'Art & Culture': [`${destination} Cultural Center`, `${destination} Arts District`, `${destination} Heritage Site`, `${destination} Creative Quarter`, `${destination} Cultural Hub`]
     };
 
     const options = templates[type] || [`${destination} Attraction`];
@@ -284,18 +323,18 @@ export class AttractionService {
 
   private generateDescription(destination: string, type: string): string {
     const descriptions = {
-      'Parks & Nature': `Beautiful natural space in ${destination} perfect for relaxation and outdoor activities.`,
-      'Museums & Galleries': `Fascinating cultural institution showcasing the rich heritage and art of ${destination}.`,
-      'Historical Sites': `Historic landmark that tells the story of ${destination}'s fascinating past.`,
-      'Shopping Districts': `Vibrant shopping area featuring local and international brands in ${destination}.`,
-      'Restaurants & Foodie Spots': `Authentic local dining experience showcasing the best flavors of ${destination}.`,
-      'Nightlife': `Exciting entertainment venue offering the best of ${destination}'s nightlife scene.`,
-      'Family-Friendly': `Fun-filled attraction perfect for families visiting ${destination}.`,
-      'Adventure & Outdoors': `Thrilling outdoor experience in the heart of ${destination}.`,
-      'Art & Culture': `Cultural hub celebrating the artistic spirit of ${destination}.`
+      'Parks & Nature': `Beautiful natural space in ${destination} perfect for relaxation and outdoor activities with stunning views and peaceful atmosphere.`,
+      'Museums & Galleries': `Fascinating cultural institution showcasing the rich heritage and art of ${destination} with world-class exhibitions and collections.`,
+      'Historical Sites': `Historic landmark that tells the captivating story of ${destination}'s fascinating past with architectural marvels and cultural significance.`,
+      'Shopping Districts': `Vibrant shopping area featuring local and international brands in ${destination} with unique boutiques and artisan shops.`,
+      'Restaurants & Foodie Spots': `Authentic local dining experience showcasing the best flavors of ${destination} with traditional cuisine and modern twists.`,
+      'Nightlife': `Exciting entertainment venue offering the best of ${destination}'s vibrant nightlife scene with live music and cultural performances.`,
+      'Family-Friendly': `Fun-filled attraction perfect for families visiting ${destination} with activities for all ages and memorable experiences.`,
+      'Adventure & Outdoors': `Thrilling outdoor experience in the heart of ${destination} offering adventure activities and scenic exploration.`,
+      'Art & Culture': `Cultural hub celebrating the artistic spirit of ${destination} with local artists, performances, and creative expressions.`
     };
 
-    return descriptions[type] || `Popular attraction in ${destination}.`;
+    return descriptions[type] || `Popular attraction in ${destination} offering unique experiences and memorable moments.`;
   }
 
   private getTypicalDuration(type: string): number {
@@ -314,25 +353,8 @@ export class AttractionService {
     return durations[type] || 90;
   }
 
-  private getPlaceholderImage(type: string): string {
-    // Use Pexels images that match the attraction type
-    const images = {
-      'Parks & Nature': 'https://images.pexels.com/photos/1006293/pexels-photo-1006293.jpeg',
-      'Museums & Galleries': 'https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg',
-      'Historical Sites': 'https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg',
-      'Shopping Districts': 'https://images.pexels.com/photos/2422461/pexels-photo-2422461.jpeg',
-      'Restaurants & Foodie Spots': 'https://images.pexels.com/photos/161663/san-francisco-california-fishermans-wharf-161663.jpeg',
-      'Nightlife': 'https://images.pexels.com/photos/378570/pexels-photo-378570.jpeg',
-      'Family-Friendly': 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg',
-      'Adventure & Outdoors': 'https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg',
-      'Art & Culture': 'https://images.pexels.com/photos/2412603/pexels-photo-2412603.jpeg'
-    };
-
-    return images[type] || 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg';
-  }
-
   private generateAddress(): string {
-    const streets = ['Main St', 'Central Ave', 'Park Rd', 'Heritage Blvd', 'Cultural Way', 'Historic Lane'];
+    const streets = ['Main St', 'Central Ave', 'Park Rd', 'Heritage Blvd', 'Cultural Way', 'Historic Lane', 'Grand Plaza', 'Royal Street', 'Market Square', 'Arts District'];
     const numbers = Math.floor(Math.random() * 999) + 1;
     return `${numbers} ${streets[Math.floor(Math.random() * streets.length)]}`;
   }
