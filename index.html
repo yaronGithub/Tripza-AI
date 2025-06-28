@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TripCraft - AI-Powered Trip Planning</title>
+    <style>
+      /* Leaflet map styles */
+      .leaflet-container {
+        font-family: inherit;
+      }
+      
+      .custom-popup .leaflet-popup-content-wrapper {
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+      
+      .custom-popup .leaflet-popup-content {
+        margin: 0;
+        padding: 0;
+      }
+      
+      .custom-popup .leaflet-popup-tip {
+        background: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
