@@ -24,17 +24,17 @@ export function NotificationToast({ type, title, message, duration = 5000, onClo
   }, [duration, onClose]);
 
   const icons = {
-    success: <CheckCircle className="w-5 h-5" />,
-    error: <XCircle className="w-5 h-5" />,
-    warning: <AlertCircle className="w-5 h-5" />,
-    info: <Info className="w-5 h-5" />
+    success: <CheckCircle className="w-6 h-6" />,
+    error: <XCircle className="w-6 h-6" />,
+    warning: <AlertCircle className="w-6 h-6" />,
+    info: <Info className="w-6 h-6" />
   };
 
   const styles = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800'
+    success: 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-800',
+    error: 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200 text-red-800',
+    warning: 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 text-yellow-800',
+    info: 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 text-blue-800'
   };
 
   const iconStyles = {
@@ -50,13 +50,13 @@ export function NotificationToast({ type, title, message, duration = 5000, onClo
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       }`}
     >
-      <div className={`${styles[type]} border rounded-lg shadow-lg p-4`}>
+      <div className={`${styles[type]} border rounded-2xl shadow-2xl p-6 backdrop-blur-lg hover-lift`}>
         <div className="flex items-start">
           <div className={`flex-shrink-0 ${iconStyles[type]}`}>
             {icons[type]}
           </div>
-          <div className="ml-3 flex-1">
-            <h3 className="text-sm font-medium">{title}</h3>
+          <div className="ml-4 flex-1">
+            <h3 className="text-sm font-bold">{title}</h3>
             {message && (
               <p className="mt-1 text-sm opacity-90">{message}</p>
             )}
@@ -66,9 +66,9 @@ export function NotificationToast({ type, title, message, duration = 5000, onClo
               setIsVisible(false);
               setTimeout(onClose, 300);
             }}
-            className="flex-shrink-0 ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex-shrink-0 ml-4 text-gray-400 hover:text-gray-600 transition-colors hover-lift"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -106,7 +106,7 @@ export function useToast() {
   };
 
   const ToastContainer = () => (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 space-y-3">
       {toasts.map(toast => (
         <NotificationToast key={toast.id} {...toast} />
       ))}
