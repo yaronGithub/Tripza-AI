@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useTrips } from '../hooks/useTrips';
 import { useAttractions } from '../hooks/useAttractions';
 import { useToast } from '../components/NotificationToast';
+import { openaiService } from '../services/openaiService';
 
 export function CreateTripPage() {
   const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
@@ -25,20 +26,26 @@ export function CreateTripPage() {
     setIsLoading(true);
     
     try {
-      showInfo('Searching Attractions', `Finding the best attractions in ${formData.destination}...`);
+      showInfo('AI Planning Started', `Creating your personalized ${formData.destination} experience...`);
       
-      // Get attractions from multiple sources (database + external APIs)
-      const availableAttractions = await searchAttractions(formData.destination, formData.preferences);
+      // Calculate trip duration
+      const daysCount = Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 3600 * 24)) + 1;
+      
+      // Generate AI-enhanced trip title and description
+      const [tripTitle, tripDescription, availableAttractions] = await Promise.all([
+        openaiService.optimizeTripTitle(formData.destination, formData.preferences, daysCount),
+        openaiService.generateTripDescription(formData.destination, formData.preferences, daysCount),
+        searchAttractions(formData.destination, formData.preferences)
+      ]);
       
       if (availableAttractions.length === 0) {
         showError('No Attractions Found', `We couldn't find attractions for ${formData.destination}. Please try a different destination.`);
         return;
       }
 
-      const daysCount = Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 3600 * 24)) + 1;
-      showInfo('Generating Itinerary', `Creating your optimized ${daysCount}-day itinerary with ${availableAttractions.length} attractions...`);
+      showInfo('Optimizing Route', `Using AI to create the perfect ${daysCount}-day itinerary with ${availableAttractions.length} attractions...`);
       
-      // Generate itinerary (now synchronous)
+      // Generate optimized itinerary
       const itinerary = generateItinerary(formData, availableAttractions);
       
       if (itinerary.length === 0) {
@@ -57,15 +64,16 @@ export function CreateTripPage() {
         userId: user?.id || 'anonymous',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        title: `Trip to ${formData.destination}`
+        title: tripTitle,
+        description: tripDescription
       };
 
       setCurrentTrip(newTrip);
       
       const totalAttractions = itinerary.reduce((sum, day) => sum + day.attractions.length, 0);
       showSuccess(
-        'Itinerary Generated!', 
-        `Your ${itinerary.length}-day trip with ${totalAttractions} attractions is ready to explore.`
+        'AI Trip Generated!', 
+        `Your personalized ${itinerary.length}-day adventure with ${totalAttractions} attractions is ready!`
       );
     } catch (error) {
       console.error('Error generating itinerary:', error);
@@ -86,7 +94,7 @@ export function CreateTripPage() {
     setSaveLoading(true);
     try {
       await saveTrip(currentTrip);
-      showSuccess('Trip Saved!', 'Your trip has been saved to your account.');
+      showSuccess('Trip Saved!', 'Your AI-generated trip has been saved to your account.');
     } catch (error) {
       console.error('Error saving trip:', error);
       showError('Save Failed', 'Failed to save trip. Please try again.');
@@ -118,25 +126,26 @@ export function CreateTripPage() {
           {/* Page Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Plan Your Next Adventure
+              AI-Powered Trip Planning
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Tell us about your dream destination and we'll create a personalized itinerary with optimized routes and handpicked attractions from around the world.
+              Experience the future of travel planning. Our AI creates personalized itineraries with Google Maps integration, 
+              real-time optimization, and intelligent recommendations tailored to your interests.
             </p>
           </div>
 
           <TripPlanningForm onSubmit={handleFormSubmit} isLoading={isLoading} />
           
-          {/* Benefits Section */}
+          {/* Enhanced Benefits Section */}
           <div className="mt-16 max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               <div className="p-6">
                 <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">🌍</span>
+                  <span className="text-2xl">🤖</span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Global Coverage</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">AI-Enhanced Planning</h3>
                 <p className="text-gray-600 text-sm">
-                  Plan trips to any destination worldwide with real-time attraction data
+                  Advanced AI creates personalized descriptions and optimizes your entire journey
                 </p>
               </div>
               
@@ -144,9 +153,9 @@ export function CreateTripPage() {
                 <div className="w-12 h-12 mx-auto mb-4 bg-orange-100 rounded-xl flex items-center justify-center">
                   <span className="text-2xl">🗺️</span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Smart Routing</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Maps Integration</h3>
                 <p className="text-gray-600 text-sm">
-                  Advanced algorithms minimize travel time and maximize exploration
+                  Real-time directions, traffic data, and street view for professional navigation
                 </p>
               </div>
               
@@ -154,9 +163,9 @@ export function CreateTripPage() {
                 <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-xl flex items-center justify-center">
                   <span className="text-2xl">⚡</span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Instant Results</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Global Coverage</h3>
                 <p className="text-gray-600 text-sm">
-                  Get your complete itinerary in seconds, not hours of research
+                  Plan trips to any destination worldwide with real attraction data and local insights
                 </p>
               </div>
             </div>
