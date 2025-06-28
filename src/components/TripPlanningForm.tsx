@@ -71,7 +71,7 @@ export function TripPlanningForm({ onSubmit, isLoading = false }: TripPlanningFo
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
-      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
       return days;
     }
     return 0;
