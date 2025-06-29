@@ -46,7 +46,13 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
     setIsPosting(true);
     
     try {
-      await createPost(caption, trip?.id || null, selectedImages);
+      // Check if trip ID is a temporary local ID or invalid UUID
+      let tripId = trip?.id || null;
+      if (tripId && (tripId.startsWith('local-') || !isValidUUID(tripId))) {
+        tripId = null;
+      }
+      
+      await createPost(caption, tripId, selectedImages);
       showSuccess('Post Created', 'Your trip has been shared successfully!');
       onClose();
     } catch (error) {
@@ -55,6 +61,12 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
     } finally {
       setIsPosting(false);
     }
+  };
+
+  // Helper function to validate UUID format
+  const isValidUUID = (uuid: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
   };
 
   const loadDestinationImages = async (destination: string) => {
