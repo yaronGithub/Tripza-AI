@@ -20,11 +20,20 @@ class EnhancedAttractionService {
       // First, get coordinates for the destination
       const coordinates = await this.geocodeDestination(destination);
       if (!coordinates) {
-        throw new Error(`Could not find coordinates for ${destination}`);
+        console.warn(`Could not find coordinates for ${destination}, using fallback attractions`);
+        return this.generateFallbackAttractions(destination, preferences, limit);
       }
 
-      // Try Google Places first for the best results
-      const googleAttractions = await this.searchGooglePlaces(coordinates, preferences, limit);
+      // Try Google Places first for the best results, but only if available
+      let googleAttractions: Attraction[] = [];
+      if (googleMapsService.isAvailable()) {
+        try {
+          googleAttractions = await this.searchGooglePlaces(coordinates, preferences, limit);
+        } catch (error) {
+          console.warn('Google Places search failed, falling back to generated attractions:', error);
+          // Continue to fallback generation instead of throwing
+        }
+      }
       
       // If we don't have enough attractions, generate fallback ones
       if (googleAttractions.length < 10) {
@@ -53,12 +62,16 @@ class EnhancedAttractionService {
     preferences: string[], 
     limit: number
   ): Promise<Attraction[]> {
-    try {
-      // Check if Google Maps is available
-      if (!googleMapsService.isAvailable()) {
-        throw new Error('Google Places service not available');
-      }
+    // Check if Google Maps is available first
+    if (!googleMapsService.isAvailable()) {
+      console.warn('Google Maps API key not configured, skipping Google Places search');
+      return [];
+    }
 
+    try {
+      // Initialize Google Maps service
+      await googleMapsService.initialize();
+      
       const attractions: Attraction[] = [];
       
       // Search for each preference type
@@ -102,6 +115,7 @@ class EnhancedAttractionService {
       return attractions.slice(0, limit);
     } catch (error) {
       console.error('Google Places search error:', error);
+      // Return empty array instead of throwing to allow fallback
       return [];
     }
   }
