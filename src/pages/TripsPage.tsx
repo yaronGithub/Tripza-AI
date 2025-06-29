@@ -1,12 +1,14 @@
-import React from 'react';
-import { Calendar, MapPin, Users, Globe, Lock, Trash2, Eye } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, MapPin, Users, Globe, Lock, Trash2, Eye, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrips } from '../hooks/useTrips';
 import { Trip } from '../types';
+import { ItineraryDisplay } from '../components/ItineraryDisplay';
 
 export function TripsPage() {
   const { user } = useAuth();
   const { trips, loading, error, deleteTrip } = useTrips(user?.id);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -24,6 +26,14 @@ export function TripsPage() {
         alert('Failed to delete trip. Please try again.');
       }
     }
+  };
+
+  const handleViewTrip = (trip: Trip) => {
+    setSelectedTrip(trip);
+  };
+
+  const handleBackToList = () => {
+    setSelectedTrip(null);
   };
 
   if (!user) {
@@ -59,6 +69,24 @@ export function TripsPage() {
     );
   }
 
+  // If a trip is selected, show the detailed view
+  if (selectedTrip) {
+    return (
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto mb-6">
+          <button
+            onClick={handleBackToList}
+            className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Back to My Trips
+          </button>
+        </div>
+        <ItineraryDisplay trip={selectedTrip} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
@@ -90,6 +118,7 @@ export function TripsPage() {
                 key={trip.id}
                 trip={trip}
                 onDelete={() => handleDeleteTrip(trip.id)}
+                onView={() => handleViewTrip(trip)}
               />
             ))}
           </div>
@@ -102,9 +131,10 @@ export function TripsPage() {
 interface TripCardProps {
   trip: Trip;
   onDelete: () => void;
+  onView: () => void;
 }
 
-function TripCard({ trip, onDelete }: TripCardProps) {
+function TripCard({ trip, onDelete, onView }: TripCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -190,7 +220,10 @@ function TripCard({ trip, onDelete }: TripCardProps) {
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <button className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium">
+          <button 
+            onClick={onView}
+            className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
             <Eye className="w-4 h-4 mr-1" />
             View Details
           </button>

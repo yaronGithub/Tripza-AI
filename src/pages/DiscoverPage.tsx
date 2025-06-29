@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, MapPin, Calendar, Users, Star, Copy, Eye, Heart } from 'lucide-react';
+import { Search, Filter, MapPin, Calendar, Users, Star, Copy, Eye, Heart, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrips } from '../hooks/useTrips';
 import { Trip } from '../types';
+import { ItineraryDisplay } from '../components/ItineraryDisplay';
 
 export function DiscoverPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -10,6 +11,7 @@ export function DiscoverPage() {
   const [publicTrips, setPublicTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [likedTrips, setLikedTrips] = useState<Set<string>>(new Set());
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
   const { user } = useAuth();
   const { saveTrip } = useTrips(user?.id);
@@ -110,6 +112,14 @@ export function DiscoverPage() {
     setLikedTrips(newLikedTrips);
   };
 
+  const handleViewTrip = (trip: Trip) => {
+    setSelectedTrip(trip);
+  };
+
+  const handleBackToDiscover = () => {
+    setSelectedTrip(null);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -132,6 +142,24 @@ export function DiscoverPage() {
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Discovering amazing trips...</p>
         </div>
+      </div>
+    );
+  }
+
+  // If a trip is selected, show the detailed view
+  if (selectedTrip) {
+    return (
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto mb-6">
+          <button
+            onClick={handleBackToDiscover}
+            className="flex items-center text-blue-600 hover:text-blue-700 font-medium"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Back to Discover
+          </button>
+        </div>
+        <ItineraryDisplay trip={selectedTrip} />
       </div>
     );
   }
@@ -286,7 +314,10 @@ export function DiscoverPage() {
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <button className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    <button 
+                      onClick={() => handleViewTrip(trip)}
+                      className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
                       <Eye className="w-4 h-4 mr-1" />
                       View Details
                     </button>
