@@ -25,7 +25,7 @@ export function TravelInspirationGallery({ isOpen, onClose }: TravelInspirationG
     {
       id: '1',
       name: 'Kyoto, Japan',
-      description: 'Experience the perfect blend of ancient traditions and modern culture in Japan's former capital. Explore serene temples, stunning gardens, and traditional tea houses while immersing yourself in Japanese history and cuisine.',
+      description: "Experience the perfect blend of ancient traditions and modern culture in Japan's former capital. Explore serene temples, stunning gardens, and traditional tea houses while immersing yourself in Japanese history and cuisine.",
       imageUrl: 'https://images.pexels.com/photos/1440476/pexels-photo-1440476.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
       bestTimeToVisit: 'March-May (cherry blossoms) or October-November (fall colors)',
       highlights: ['Fushimi Inari Shrine', 'Arashiyama Bamboo Grove', 'Kinkaku-ji (Golden Pavilion)', 'Gion District']
