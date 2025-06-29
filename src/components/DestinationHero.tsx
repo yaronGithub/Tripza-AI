@@ -20,6 +20,7 @@ export function DestinationHero({
 }: DestinationHeroProps) {
   const [heroImage, setHeroImage] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [imageSource, setImageSource] = useState<'Google Maps' | 'Pexels' | 'Unsplash' | 'Default'>('Default');
 
   useEffect(() => {
     loadHeroImage();
@@ -38,6 +39,7 @@ export function DestinationHero({
           if (places && places.length > 0 && places[0].photos && places[0].photos.length > 0) {
             const photoUrl = googleMapsService.getPlacePhotoUrl(places[0].photos[0], 1200);
             setHeroImage(photoUrl);
+            setImageSource('Google Maps');
             setLoading(false);
             return;
           }
@@ -47,9 +49,38 @@ export function DestinationHero({
         }
       }
       
+      // Try Pexels API
+      try {
+        const pexelsApiKey = import.meta.env.VITE_PEXELS_API_KEY;
+        if (pexelsApiKey) {
+          const response = await fetch(
+            `https://api.pexels.com/v1/search?query=${encodeURIComponent(destination + ' skyline landmark')}&per_page=1&orientation=landscape`,
+            {
+              headers: {
+                'Authorization': pexelsApiKey
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.photos && data.photos.length > 0) {
+              const imageUrl = data.photos[0].src.large2x || data.photos[0].src.large;
+              setHeroImage(imageUrl);
+              setImageSource('Pexels');
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (pexelsError) {
+        console.warn('Pexels API error:', pexelsError);
+      }
+      
       // Try to get a destination image from our image service
       const imageUrl = await imageService.getDestinationHeroImage(destination);
       setHeroImage(imageUrl);
+      setImageSource('Default');
     } catch (error) {
       console.error('Error loading hero image:', error);
       // Use a fallback image based on destination
@@ -74,6 +105,7 @@ export function DestinationHero({
       }
       
       setHeroImage(matchedImage);
+      setImageSource('Default');
     } finally {
       setLoading(false);
     }
@@ -162,6 +194,11 @@ export function DestinationHero({
             )}
           </div>
         </div>
+      </div>
+      
+      {/* Image Source Badge */}
+      <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-white border border-white/30">
+        {imageSource}
       </div>
     </div>
   );

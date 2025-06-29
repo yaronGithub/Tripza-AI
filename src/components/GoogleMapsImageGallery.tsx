@@ -24,6 +24,7 @@ export function GoogleMapsImageGallery({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [imageSource, setImageSource] = useState<'Google Maps' | 'Pexels' | 'Unsplash' | 'Default'>('Google Maps');
 
   useEffect(() => {
     loadImages();
@@ -47,14 +48,7 @@ export function GoogleMapsImageGallery({
       if (!googleMapsService.isAvailable()) {
         console.warn('Google Maps not available for image loading');
         // Fall back to image service instead of showing error
-        const fallbackImages = await imageService.getImageGallery(attractionName, city, 'attraction', 3);
-        if (fallbackImages.length > 0) {
-          setImages(fallbackImages);
-          setLoading(false);
-          return;
-        }
-        setError(true);
-        setLoading(false);
+        await loadFallbackImages();
         return;
       }
 
@@ -63,9 +57,16 @@ export function GoogleMapsImageGallery({
       // If we have a place ID, get photos directly
       if (placeId) {
         try {
+          await googleMapsService.initialize();
           const placeDetails = await googleMapsService.getPlaceDetails(placeId);
           if (placeDetails) {
             photos = googleMapsService.getPlacePhotos(placeDetails, 5);
+            if (photos.length > 0) {
+              setImages(photos);
+              setImageSource('Google Maps');
+              setLoading(false);
+              return;
+            }
           }
         } catch (err) {
           console.warn('Error getting place details:', err);
@@ -75,6 +76,7 @@ export function GoogleMapsImageGallery({
       // If no photos from place ID, search for the place
       if (photos.length === 0) {
         try {
+          await googleMapsService.initialize();
           const searchQuery = `${attractionName} ${city}`;
           const places = await googleMapsService.searchPlaces(searchQuery);
           
@@ -84,6 +86,12 @@ export function GoogleMapsImageGallery({
               const placeDetails = await googleMapsService.getPlaceDetails(bestMatch.place_id);
               if (placeDetails) {
                 photos = googleMapsService.getPlacePhotos(placeDetails, 5);
+                if (photos.length > 0) {
+                  setImages(photos);
+                  setImageSource('Google Maps');
+                  setLoading(false);
+                  return;
+                }
               }
             }
           }
@@ -92,81 +100,90 @@ export function GoogleMapsImageGallery({
         }
       }
 
-      if (photos.length > 0) {
-        setImages(photos);
-      } else {
-        // Try Pexels API for additional images if available
-        const pexelsImages = await getPexelsImages(attractionName, city);
-        if (pexelsImages.length > 0) {
-          setImages(pexelsImages);
-          setLoading(false);
-          return;
-        }
-        
-        // Fall back to image service if Google Maps photos are not available
-        const fallbackImages = await imageService.getImageGallery(attractionName, city, 'attraction', 3);
-        if (fallbackImages.length > 0) {
-          setImages(fallbackImages);
-        } else {
-          // Try Pexels as a last resort
-          const pexelsImages = await getPexelsImages(attractionName, city);
-          if (pexelsImages.length > 0) {
-            setImages(pexelsImages);
-          } else {
-            setError(true);
-          }
-        }
+      // If still no photos, fall back to other methods
+      if (photos.length === 0) {
+        await loadFallbackImages();
       }
     } catch (err) {
       console.error('Error loading images:', err);
-      // Try fallback images from image service
-      try {
-        const fallbackImages = await imageService.getImageGallery(attractionName, city, 'attraction', 3);
-        if (fallbackImages.length > 0) {
-          setImages(fallbackImages);
-        } else {
-          // Try Pexels as a last resort
-          const pexelsImages = await getPexelsImages(attractionName, city);
-          if (pexelsImages.length > 0) {
-            setImages(pexelsImages);
-          } else {
-            setError(true);
-          }
-        }
-      } catch (fallbackErr) {
-        setError(true);
-      }
-    } finally {
-      setLoading(false);
+      await loadFallbackImages();
     }
   };
 
-  const getPexelsImages = async (query: string, location: string): Promise<string[]> => {
+  const loadFallbackImages = async () => {
     try {
-      // Use Pexels API for high-quality images
-      const searchQuery = `${query} ${location}`;
-      const response = await fetch(
-        `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=3&orientation=landscape`,
-        {
-          headers: {
-            'Authorization': import.meta.env.VITE_PEXELS_API_KEY || ''
+      // Try Pexels API first
+      try {
+        const pexelsApiKey = import.meta.env.VITE_PEXELS_API_KEY;
+        if (pexelsApiKey) {
+          const searchQuery = `${attractionName} ${city}`;
+          const response = await fetch(
+            `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=3&orientation=landscape`,
+            {
+              headers: {
+                'Authorization': pexelsApiKey
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.photos && data.photos.length > 0) {
+              const pexelsImages = data.photos.map((photo: any) => photo.src.large);
+              setImages(pexelsImages);
+              setImageSource('Pexels');
+              setLoading(false);
+              return;
+            }
           }
         }
-      );
-      
-      if (!response.ok) {
-        throw new Error('Pexels API error');
+      } catch (pexelsError) {
+        console.warn('Pexels API error:', pexelsError);
       }
       
-      const data = await response.json();
-      if (data.photos && data.photos.length > 0) {
-        return data.photos.map((photo: any) => photo.src.large);
+      // Try Unsplash API if available
+      try {
+        const unsplashAccessKey = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
+        if (unsplashAccessKey) {
+          const searchQuery = `${attractionName} ${city}`;
+          const response = await fetch(
+            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchQuery)}&per_page=3&orientation=landscape`,
+            {
+              headers: {
+                'Authorization': `Client-ID ${unsplashAccessKey}`
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.results && data.results.length > 0) {
+              const unsplashImages = data.results.map((photo: any) => photo.urls.regular);
+              setImages(unsplashImages);
+              setImageSource('Unsplash');
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (unsplashError) {
+        console.warn('Unsplash API error:', unsplashError);
       }
       
-      return [];
+      // Fall back to image service
+      const fallbackImages = await imageService.getImageGallery(attractionName, city, 'attraction', 3);
+      if (fallbackImages.length > 0) {
+        setImages(fallbackImages);
+        setImageSource('Default');
+        setLoading(false);
+      } else {
+        setError(true);
+        setLoading(false);
+      }
     } catch (error) {
-      console.error('Pexels search error:', error);
-      return [];
+      console.error('Error loading fallback images:', error);
+      setError(true);
+      setLoading(false);
     }
   };
 
@@ -212,16 +229,19 @@ export function GoogleMapsImageGallery({
           src={images[currentIndex]}
           alt={`${attractionName} - Photo ${currentIndex + 1}`}
           className="w-full h-full object-cover transition-opacity duration-500"
-          onError={() => setError(true)}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
+          }}
         />
         
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
         
-        {/* Google Maps Badge */}
+        {/* Image Source Badge */}
         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-800 flex items-center">
           <MapPin className="w-3 h-3 mr-1 text-blue-600" />
-          {googleMapsService.isAvailable() ? 'Google Maps' : 'Pexels'}
+          {imageSource}
         </div>
         
         {/* Image Counter */}

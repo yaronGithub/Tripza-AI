@@ -273,6 +273,46 @@ class GoogleMapsService {
     
     return durations[type] || 90;
   }
+
+  // Get directions between two points
+  async getDirections(
+    origin: { lat: number; lng: number },
+    destination: { lat: number; lng: number },
+    waypoints?: { lat: number; lng: number }[]
+  ): Promise<google.maps.DirectionsResult> {
+    if (!this.isAvailable()) {
+      throw new Error('Google Maps API not available');
+    }
+
+    if (!this.initialized) {
+      await this.initialize();
+    }
+
+    return new Promise((resolve, reject) => {
+      const directionsService = new google.maps.DirectionsService();
+      
+      const request: google.maps.DirectionsRequest = {
+        origin: new google.maps.LatLng(origin.lat, origin.lng),
+        destination: new google.maps.LatLng(destination.lat, destination.lng),
+        travelMode: google.maps.TravelMode.WALKING
+      };
+      
+      if (waypoints && waypoints.length > 0) {
+        request.waypoints = waypoints.map(wp => ({
+          location: new google.maps.LatLng(wp.lat, wp.lng),
+          stopover: true
+        }));
+      }
+
+      directionsService.route(request, (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          resolve(result);
+        } else {
+          reject(new Error(`Directions request failed: ${status}`));
+        }
+      });
+    });
+  }
 }
 
 export const googleMapsService = new GoogleMapsService();

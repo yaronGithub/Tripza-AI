@@ -23,6 +23,7 @@ export function ImageGallery({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [imageSource, setImageSource] = useState<'Pexels' | 'Unsplash' | 'Default'>('Default');
 
   useEffect(() => {
     loadImages();
@@ -60,6 +61,7 @@ export function ImageGallery({
             if (data.photos && data.photos.length > 0) {
               const pexelsImages = data.photos.map((photo: any) => photo.src.large);
               setImages(pexelsImages);
+              setImageSource('Pexels');
               setError(false);
               setLoading(false);
               return;
@@ -70,10 +72,41 @@ export function ImageGallery({
         console.warn('Pexels API error:', pexelsError);
       }
       
+      // Try Unsplash API if available
+      try {
+        const unsplashAccessKey = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
+        if (unsplashAccessKey) {
+          const searchQuery = `${attractionName} ${city} ${category}`;
+          const response = await fetch(
+            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchQuery)}&per_page=3&orientation=landscape`,
+            {
+              headers: {
+                'Authorization': `Client-ID ${unsplashAccessKey}`
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.results && data.results.length > 0) {
+              const unsplashImages = data.results.map((photo: any) => photo.urls.regular);
+              setImages(unsplashImages);
+              setImageSource('Unsplash');
+              setError(false);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (unsplashError) {
+        console.warn('Unsplash API error:', unsplashError);
+      }
+      
       // Fall back to image service
       const imageGallery = await imageService.getImageGallery(attractionName, city, category, 3);
       if (imageGallery.length > 0) {
         setImages(imageGallery);
+        setImageSource('Default');
         setError(false);
       } else {
         setError(true);
@@ -125,7 +158,6 @@ export function ImageGallery({
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
-            setError(true);
           }}
         />
         
@@ -134,7 +166,7 @@ export function ImageGallery({
         
         {/* Image Source Badge */}
         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-800">
-          Pexels
+          {imageSource}
         </div>
         
         {/* Image Counter */}

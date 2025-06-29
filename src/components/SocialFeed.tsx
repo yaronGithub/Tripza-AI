@@ -60,6 +60,33 @@ export function SocialFeed() {
             }
           }
           
+          // Try Pexels API
+          try {
+            const pexelsApiKey = import.meta.env.VITE_PEXELS_API_KEY;
+            if (pexelsApiKey) {
+              const response = await fetch(
+                `https://api.pexels.com/v1/search?query=${encodeURIComponent(destination + ' landmark')}&per_page=3&orientation=landscape`,
+                {
+                  headers: {
+                    'Authorization': pexelsApiKey
+                  }
+                }
+              );
+              
+              if (response.ok) {
+                const data = await response.json();
+                if (data.photos && data.photos.length > 0) {
+                  const pexelsImages = data.photos.map((photo: any) => photo.src.large);
+                  newPostImages[post.id] = pexelsImages;
+                  updated = true;
+                  continue;
+                }
+              }
+            }
+          } catch (pexelsError) {
+            console.warn('Pexels API error:', pexelsError);
+          }
+          
           // Fallback to image service
           try {
             const image = await imageService.getDestinationHeroImage(destination);
