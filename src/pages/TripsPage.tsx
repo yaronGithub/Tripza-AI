@@ -18,16 +18,6 @@ export function TripsPage() {
     });
   };
 
-  const handleDeleteTrip = async (tripId: string) => {
-    if (window.confirm('Are you sure you want to delete this trip?')) {
-      try {
-        await deleteTrip(tripId);
-      } catch (error) {
-        alert('Failed to delete trip. Please try again.');
-      }
-    }
-  };
-
   const handleViewTrip = (trip: Trip) => {
     setSelectedTrip(trip);
   };
@@ -37,11 +27,21 @@ export function TripsPage() {
   };
 
   const handleNavigateToCreate = () => {
-    // Use window.location to navigate to the create page
-    window.location.href = '#';
-    // Dispatch a custom event that App.tsx can listen for
-    const event = new CustomEvent('navigate', { detail: { page: 'create' } });
-    window.dispatchEvent(event);
+    // Use window.dispatchEvent to trigger a custom event
+    const navigateEvent = new CustomEvent('navigateTo', { 
+      detail: { page: 'create' } 
+    });
+    window.dispatchEvent(navigateEvent);
+  };
+
+  const handleDeleteTrip = async (tripId: string) => {
+    if (window.confirm('Are you sure you want to delete this trip?')) {
+      try {
+        await deleteTrip(tripId);
+      } catch (error) {
+        alert('Failed to delete trip. Please try again.');
+      }
+    }
   };
 
   if (!user) {

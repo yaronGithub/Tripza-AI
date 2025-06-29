@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { CreateTripPage } from './pages/CreateTripPage';
@@ -15,6 +15,21 @@ function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const { loading } = useAuth();
   const { ToastContainer } = useToast();
+
+  useEffect(() => {
+    // Listen for custom navigation events
+    const handleNavigate = (event: CustomEvent) => {
+      if (event.detail && event.detail.page) {
+        setCurrentPage(event.detail.page as Page);
+      }
+    };
+
+    window.addEventListener('navigateTo', handleNavigate as EventListener);
+
+    return () => {
+      window.removeEventListener('navigateTo', handleNavigate as EventListener);
+    };
+  }, []);
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page as Page);
