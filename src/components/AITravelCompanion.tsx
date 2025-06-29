@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, Bot, User, Sparkles, MapPin, Calendar, Clock, Star, Lightbulb } from 'lucide-react';
+import { MessageCircle, Send, Bot, User, Sparkles, MapPin, Calendar, Clock, Star, Lightbulb, List, Compass } from 'lucide-react';
 import { openaiService } from '../services/openaiService';
 import { Trip } from '../types';
+import { useTrips } from '../hooks/useTrips';
+import { useAuth } from '../hooks/useAuth';
 
 interface AITravelCompanionProps {
   trip?: Trip;
@@ -20,11 +22,17 @@ export function AITravelCompanion({ trip, className = '' }: AITravelCompanionPro
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showTripSelector, setShowTripSelector] = useState(false);
+  const [selectedTripId, setSelectedTripId] = useState<string | undefined>(trip?.id);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const { user } = useAuth();
+  const { trips } = useTrips(user?.id);
 
   useEffect(() => {
     // Initialize with a welcome message
     if (trip) {
+      setSelectedTripId(trip.id);
       const welcomeMessage: Message = {
         id: 'welcome',
         type: 'ai',
@@ -80,7 +88,12 @@ export function AITravelCompanion({ trip, className = '' }: AITravelCompanionPro
     setIsTyping(true);
 
     try {
-      const aiResponse = await openaiService.generateTravelCompanionResponse(message, trip);
+      // Get the current trip context
+      const currentTrip = selectedTripId 
+        ? trips.find(t => t.id === selectedTripId) || trip 
+        : trip;
+
+      const aiResponse = await openaiService.generateTravelCompanionResponse(message, currentTrip);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -123,19 +136,93 @@ export function AITravelCompanion({ trip, className = '' }: AITravelCompanionPro
     });
   };
 
+  const handleTripSelect = (tripId: string) => {
+    const selectedTrip = trips.find(t => t.id === tripId);
+    if (selectedTrip) {
+      setSelectedTripId(tripId);
+      
+      const tripChangeMessage: Message = {
+        id: Date.now().toString(),
+        type: 'ai',
+        content: `I'm now focusing on your "${selectedTrip.title || `Trip to ${selectedTrip.destination}`}" itinerary. What would you like to know about this trip?`,
+        timestamp: new Date(),
+        suggestions: [
+          'Analyze this itinerary',
+          'What should I pack?',
+          'Local tips for this trip',
+          'Best time to visit attractions'
+        ]
+      };
+      
+      setMessages(prev => [...prev, tripChangeMessage]);
+    }
+    
+    setShowTripSelector(false);
+  };
+
   return (
     <div className={`bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden ${className}`}>
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
-        <div className="flex items-center">
-          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mr-4 pulse-glow">
-            <Bot className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mr-4 pulse-glow">
+              <Bot className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">AI Travel Companion</h3>
+              <p className="text-blue-100">Your intelligent travel assistant</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xl font-bold text-white">AI Travel Companion</h3>
-            <p className="text-blue-100">Your intelligent travel assistant</p>
-          </div>
+          
+          {/* Trip Selector Button */}
+          {trips.length > 0 && (
+            <button 
+              onClick={() => setShowTripSelector(!showTripSelector)}
+              className="p-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+              title="Select a trip to discuss"
+            >
+              <List className="w-5 h-5" />
+            </button>
+          )}
         </div>
+        
+        {/* Trip Selector Dropdown */}
+        {showTripSelector && (
+          <div className="mt-4 bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="p-3 bg-gray-50 border-b border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-700">Select a trip to discuss</h4>
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              {trips.length > 0 ? (
+                <div className="divide-y divide-gray-100">
+                  {trips.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleTripSelect(t.id)}
+                      className={`w-full text-left p-3 hover:bg-blue-50 transition-colors ${
+                        selectedTripId === t.id ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <div className="font-medium text-gray-900">{t.title || `Trip to ${t.destination}`}</div>
+                      <div className="text-xs text-gray-600 flex items-center mt-1">
+                        <MapPin className="w-3 h-3 mr-1" />
+                        <span>{t.destination}</span>
+                        <span className="mx-1">•</span>
+                        <Calendar className="w-3 h-3 mr-1" />
+                        <span>{new Date(t.startDate).toLocaleDateString()}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-500">
+                  <p>No saved trips found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Messages */}
@@ -233,27 +320,40 @@ export function AITravelCompanion({ trip, className = '' }: AITravelCompanionPro
 
         {/* Quick Actions */}
         <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            onClick={() => handleSendMessage('Analyze my itinerary')}
-            className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs hover:bg-purple-200 transition-colors"
-          >
-            <Lightbulb className="w-3 h-3 inline mr-1" />
-            Analyze Trip
-          </button>
-          <button
-            onClick={() => handleSendMessage('Give me local tips')}
-            className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs hover:bg-green-200 transition-colors"
-          >
-            <MapPin className="w-3 h-3 inline mr-1" />
-            Local Tips
-          </button>
-          <button
-            onClick={() => handleSendMessage('Optimize my schedule')}
-            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors"
-          >
-            <Clock className="w-3 h-3 inline mr-1" />
-            Optimize
-          </button>
+          {selectedTripId && (
+            <>
+              <button
+                onClick={() => handleSendMessage('Analyze my itinerary')}
+                className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs hover:bg-purple-200 transition-colors"
+              >
+                <Lightbulb className="w-3 h-3 inline mr-1" />
+                Analyze Trip
+              </button>
+              <button
+                onClick={() => handleSendMessage('Give me local tips')}
+                className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs hover:bg-green-200 transition-colors"
+              >
+                <MapPin className="w-3 h-3 inline mr-1" />
+                Local Tips
+              </button>
+              <button
+                onClick={() => handleSendMessage('Optimize my schedule')}
+                className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors"
+              >
+                <Clock className="w-3 h-3 inline mr-1" />
+                Optimize
+              </button>
+            </>
+          )}
+          {trips.length > 0 && !selectedTripId && (
+            <button
+              onClick={() => setShowTripSelector(true)}
+              className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs hover:bg-orange-200 transition-colors"
+            >
+              <Compass className="w-3 h-3 inline mr-1" />
+              Select a Trip
+            </button>
+          )}
         </div>
       </div>
     </div>

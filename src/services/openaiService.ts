@@ -39,6 +39,10 @@ class OpenAIService {
         - Duration: ${trip.itinerary?.length || 'Unknown'} days
         - Interests: ${trip.preferences?.join(', ') || 'General sightseeing'}
         - Attractions planned: ${trip.itinerary?.reduce((sum: number, day: any) => sum + (day.attractions?.length || 0), 0) || 0}
+        - Trip dates: ${trip.startDate} to ${trip.endDate}
+        - Key attractions: ${trip.itinerary?.flatMap((day: any) => 
+            day.attractions?.slice(0, 2).map((a: any) => a.name) || []
+          ).join(', ') || 'None specified'}
       ` : 'No specific trip context available.';
 
       const prompt = `You are an enthusiastic, knowledgeable AI travel companion. The user said: "${userMessage}"
@@ -52,6 +56,7 @@ class OpenAIService {
       - Suggests follow-up questions or actions
       - Keeps responses conversational and engaging
       - Focuses on enhancing the travel experience
+      - References specific details from their trip when relevant
 
       Provide your response in JSON format with:
       - content: Your main response (keep it conversational, max 150 words)
@@ -143,6 +148,26 @@ class OpenAIService {
           ? `${trip.destination} has amazing local cuisine! I recommend trying authentic local dishes at neighborhood restaurants rather than tourist areas. Food markets are also great for experiencing local flavors.`
           : "Food is one of the best parts of traveling! Always try local specialties, visit food markets, and don't be afraid to eat where the locals eat.",
         suggestions: ['Best local dishes', 'Food safety tips', 'Dietary restrictions help', 'Street food recommendations']
+      };
+    }
+
+    if (message.includes('analyze') || message.includes('review')) {
+      return {
+        content: trip
+          ? `I've analyzed your ${trip.destination} itinerary and it looks well-balanced! You've included a good mix of ${trip.preferences?.join(', ')}. Your daily plans are geographically optimized to minimize travel time.`
+          : "I'd be happy to analyze your travel plans! Just select a trip for us to discuss or create a new one.",
+        suggestions: trip
+          ? ['Any improvements needed?', 'Is my pace too fast?', 'Best day of the trip?', 'What might I be missing?']
+          : ['How to create a balanced itinerary', 'Optimal trip duration', 'How many attractions per day?']
+      };
+    }
+
+    if (message.includes('optimize') || message.includes('improve')) {
+      return {
+        content: trip
+          ? `To optimize your ${trip.destination} trip, consider visiting attractions in the same area on the same day. I notice you could group the attractions in ${trip.itinerary?.[0]?.attractions?.[0]?.name || 'the city center'} area together to save travel time.`
+          : "Trip optimization is all about balancing what you want to see with practical logistics. The key is grouping attractions by location and considering opening hours.",
+        suggestions: ['More optimization tips', 'How to avoid crowds', 'Best times for popular spots', 'Transportation advice']
       };
     }
 

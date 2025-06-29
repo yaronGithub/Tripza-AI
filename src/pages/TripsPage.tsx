@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Users, Globe, Lock, Trash2, Eye, X } from 'lucide-react';
+import { Calendar, MapPin, Users, Globe, Lock, Trash2, Eye, X, MessageCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrips } from '../hooks/useTrips';
 import { Trip } from '../types';
 import { ItineraryDisplay } from '../components/ItineraryDisplay';
+import { AITravelCompanion } from '../components/AITravelCompanion';
 
 export function TripsPage() {
   const { user } = useAuth();
   const { trips, loading, error, deleteTrip } = useTrips(user?.id);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [showCompanion, setShowCompanion] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -42,6 +44,10 @@ export function TripsPage() {
         alert('Failed to delete trip. Please try again.');
       }
     }
+  };
+
+  const toggleCompanion = () => {
+    setShowCompanion(!showCompanion);
   };
 
   if (!user) {
@@ -90,7 +96,16 @@ export function TripsPage() {
             Back to My Trips
           </button>
         </div>
-        <ItineraryDisplay trip={selectedTrip} />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <ItineraryDisplay trip={selectedTrip} />
+          </div>
+          
+          <div className="lg:col-span-1">
+            <AITravelCompanion trip={selectedTrip} className="sticky top-8" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -99,41 +114,64 @@ export function TripsPage() {
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">My Trips</h1>
-          <p className="text-xl text-gray-600">
-            Your saved travel adventures and itineraries
-          </p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">My Trips</h1>
+            <p className="text-xl text-gray-600">
+              Your saved travel adventures and itineraries
+            </p>
+          </div>
+          
+          <button
+            onClick={toggleCompanion}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center"
+          >
+            <MessageCircle className="w-5 h-5 mr-2" />
+            AI Travel Assistant
+          </button>
         </div>
 
-        {trips.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-orange-100 rounded-full flex items-center justify-center">
-              <MapPin className="w-12 h-12 text-blue-600" />
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Trips Grid */}
+          <div className={`${showCompanion ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+            {trips.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-orange-100 rounded-full flex items-center justify-center">
+                  <MapPin className="w-12 h-12 text-blue-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">No trips yet</h2>
+                <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                  Start planning your first adventure! Create a personalized itinerary in just a few minutes.
+                </p>
+                <button 
+                  onClick={handleNavigateToCreate}
+                  className="bg-gradient-to-r from-blue-600 to-orange-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-orange-600 transition-all duration-200"
+                >
+                  Plan Your First Trip
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {trips.map((trip) => (
+                  <TripCard
+                    key={trip.id}
+                    trip={trip}
+                    onDelete={() => handleDeleteTrip(trip.id)}
+                    onView={() => handleViewTrip(trip)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* AI Companion */}
+          {showCompanion && (
+            <div className="lg:col-span-1">
+              <AITravelCompanion className="sticky top-8" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">No trips yet</h2>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Start planning your first adventure! Create a personalized itinerary in just a few minutes.
-            </p>
-            <button 
-              onClick={handleNavigateToCreate}
-              className="bg-gradient-to-r from-blue-600 to-orange-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-orange-600 transition-all duration-200"
-            >
-              Plan Your First Trip
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trips.map((trip) => (
-              <TripCard
-                key={trip.id}
-                trip={trip}
-                onDelete={() => handleDeleteTrip(trip.id)}
-                onView={() => handleViewTrip(trip)}
-              />
-            ))}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
