@@ -53,15 +53,6 @@ export function GoogleMapsImageGallery({
           setLoading(false);
           return;
         }
-        
-        // Try Pexels API for additional images if available
-        const pexelsImages = await getPexelsImages(attractionName, city);
-        if (pexelsImages.length > 0) {
-          setImages(pexelsImages);
-          setLoading(false);
-          return;
-        }
-        
         setError(true);
         setLoading(false);
         return;
@@ -104,6 +95,14 @@ export function GoogleMapsImageGallery({
       if (photos.length > 0) {
         setImages(photos);
       } else {
+        // Try Pexels API for additional images if available
+        const pexelsImages = await getPexelsImages(attractionName, city);
+        if (pexelsImages.length > 0) {
+          setImages(pexelsImages);
+          setLoading(false);
+          return;
+        }
+        
         // Fall back to image service if Google Maps photos are not available
         const fallbackImages = await imageService.getImageGallery(attractionName, city, 'attraction', 3);
         if (fallbackImages.length > 0) {

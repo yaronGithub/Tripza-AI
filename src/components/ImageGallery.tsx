@@ -40,9 +40,44 @@ export function ImageGallery({
   const loadImages = async () => {
     try {
       setLoading(true);
+      
+      // Try Pexels API first
+      try {
+        const pexelsApiKey = import.meta.env.VITE_PEXELS_API_KEY;
+        if (pexelsApiKey) {
+          const searchQuery = `${attractionName} ${city} ${category}`;
+          const response = await fetch(
+            `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=3&orientation=landscape`,
+            {
+              headers: {
+                'Authorization': pexelsApiKey
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.photos && data.photos.length > 0) {
+              const pexelsImages = data.photos.map((photo: any) => photo.src.large);
+              setImages(pexelsImages);
+              setError(false);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (pexelsError) {
+        console.warn('Pexels API error:', pexelsError);
+      }
+      
+      // Fall back to image service
       const imageGallery = await imageService.getImageGallery(attractionName, city, category, 3);
-      setImages(imageGallery);
-      setError(false);
+      if (imageGallery.length > 0) {
+        setImages(imageGallery);
+        setError(false);
+      } else {
+        setError(true);
+      }
     } catch (err) {
       console.error('Error loading images:', err);
       setError(true);
@@ -87,11 +122,20 @@ export function ImageGallery({
           src={images[currentIndex]}
           alt={attractionName}
           className="w-full h-full object-cover transition-opacity duration-500"
-          onError={() => setError(true)}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
+            setError(true);
+          }}
         />
         
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        
+        {/* Image Source Badge */}
+        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-800">
+          Pexels
+        </div>
         
         {/* Image Counter */}
         {images.length > 1 && (

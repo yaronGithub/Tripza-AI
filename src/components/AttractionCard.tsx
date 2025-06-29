@@ -147,7 +147,7 @@ export function AttractionCard({
               {onLike && (
                 <button
                   onClick={onLike}
-                  className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+                  className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white/70 transition-colors"
                 >
                   <Heart 
                     className={`w-4 h-4 ${
