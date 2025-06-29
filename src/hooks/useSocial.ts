@@ -18,6 +18,7 @@ export function useSocial() {
   const fetchSocialFeed = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Fetch posts with user and trip data
       const { data: postsData, error: postsError } = await supabase
@@ -60,7 +61,9 @@ export function useSocial() {
 
       setPosts(enrichedPosts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch social feed');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch social feed';
+      console.error('Error fetching social feed:', err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -235,6 +238,7 @@ export function useUserProfile(userId?: string) {
   const [userPosts, setUserPosts] = useState<SocialPost[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -249,16 +253,19 @@ export function useUserProfile(userId?: string) {
     if (!userId) return;
 
     try {
-      const { data, error } = await supabase
+      setError(null);
+      const { data, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
       setProfile(data);
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user profile';
       console.error('Error fetching user profile:', err);
+      setError(errorMessage);
     }
   };
 
@@ -266,7 +273,8 @@ export function useUserProfile(userId?: string) {
     if (!userId) return;
 
     try {
-      const { data, error } = await supabase
+      setError(null);
+      const { data, error: postsError } = await supabase
         .from('social_posts')
         .select(`
           *,
@@ -276,10 +284,12 @@ export function useUserProfile(userId?: string) {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (postsError) throw postsError;
       setUserPosts(data || []);
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user posts';
       console.error('Error fetching user posts:', err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -345,6 +355,7 @@ export function useUserProfile(userId?: string) {
     userPosts,
     isFollowing,
     loading,
+    error,
     toggleFollow
   };
 }
@@ -353,6 +364,7 @@ export function useTrendingData() {
   const [trendingDestinations, setTrendingDestinations] = useState<any[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<SocialProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { fetchPublicTrips } = useTrips(user?.id);
 
@@ -363,15 +375,20 @@ export function useTrendingData() {
   const fetchTrendingData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Fetch trending destinations based on recent posts
-      const { data: destinations } = await supabase
+      const { data: destinations, error: destinationsError } = await supabase
         .from('social_posts')
         .select(`
           trip:trips(destination)
         `)
         .not('trip_id', 'is', null)
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (destinationsError) {
+        console.warn('Error fetching destinations from posts:', destinationsError);
+      }
 
       // Count destinations
       const destinationCounts: Record<string, number> = {};
@@ -383,12 +400,16 @@ export function useTrendingData() {
 
       // If we don't have enough trending destinations from posts, get some from public trips
       if (Object.keys(destinationCounts).length < 5) {
-        const publicTrips = await fetchPublicTrips(20);
-        publicTrips.forEach(trip => {
-          if (trip.destination) {
-            destinationCounts[trip.destination] = (destinationCounts[trip.destination] || 0) + 1;
-          }
-        });
+        try {
+          const publicTrips = await fetchPublicTrips(20);
+          publicTrips.forEach(trip => {
+            if (trip.destination) {
+              destinationCounts[trip.destination] = (destinationCounts[trip.destination] || 0) + 1;
+            }
+          });
+        } catch (err) {
+          console.warn('Error fetching public trips:', err);
+        }
       }
 
       const trending = Object.entries(destinationCounts)
@@ -403,11 +424,15 @@ export function useTrendingData() {
       setTrendingDestinations(trending.length > 0 ? trending : generateFallbackTrending());
 
       // Fetch suggested users (users with most followers)
-      const { data: users } = await supabase
+      const { data: users, error: usersError } = await supabase
         .from('profiles')
         .select('*')
         .order('followers_count', { ascending: false })
         .limit(5);
+
+      if (usersError) {
+        console.warn('Error fetching suggested users:', usersError);
+      }
 
       if (users && users.length > 0) {
         setSuggestedUsers(users);
@@ -415,7 +440,9 @@ export function useTrendingData() {
         setSuggestedUsers(generateFallbackUsers());
       }
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch trending data';
       console.error('Error fetching trending data:', err);
+      setError(errorMessage);
       setTrendingDestinations(generateFallbackTrending());
       setSuggestedUsers(generateFallbackUsers());
     } finally {
@@ -522,6 +549,7 @@ export function useTrendingData() {
     trendingDestinations,
     suggestedUsers,
     loading,
+    error,
     refetch: fetchTrendingData
   };
 }
