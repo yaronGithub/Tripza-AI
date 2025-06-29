@@ -141,6 +141,11 @@ export function DiscoverPage() {
     return 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
   };
 
+  const handleRefresh = async () => {
+    await loadPublicTrips();
+    showSuccess('Refreshed', 'Discover page has been refreshed with the latest trips');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
@@ -222,10 +227,16 @@ export function DiscoverPage() {
         </div>
 
         {/* Results */}
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <p className="text-gray-600">
             {filteredTrips.length} trip{filteredTrips.length !== 1 ? 's' : ''} found
           </p>
+          <button 
+            onClick={handleRefresh}
+            className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+          >
+            Refresh Trips
+          </button>
         </div>
 
         {/* Trip Grid */}

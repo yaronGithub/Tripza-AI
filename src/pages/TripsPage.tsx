@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Users, Globe, Lock, Trash2, Eye, X, MessageCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Globe, Lock, Trash2, Eye, X, MessageCircle, Share2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrips } from '../hooks/useTrips';
 import { Trip } from '../types';
 import { ItineraryDisplay } from '../components/ItineraryDisplay';
 import { AITravelCompanion } from '../components/AITravelCompanion';
+import { useToast } from '../components/NotificationToast';
+import { CreatePost } from '../components/CreatePost';
 
 export function TripsPage() {
   const { user } = useAuth();
-  const { trips, loading, error, deleteTrip } = useTrips(user?.id);
+  const { trips, loading, error, deleteTrip, updateTripPublicStatus } = useTrips(user?.id);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [showCompanion, setShowCompanion] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -40,9 +44,40 @@ export function TripsPage() {
     if (window.confirm('Are you sure you want to delete this trip?')) {
       try {
         await deleteTrip(tripId);
+        showSuccess('Trip Deleted', 'Your trip has been successfully deleted');
       } catch (error) {
-        alert('Failed to delete trip. Please try again.');
+        showError('Delete Failed', 'Failed to delete trip. Please try again.');
       }
+    }
+  };
+
+  const handleTogglePublic = async (trip: Trip) => {
+    try {
+      await updateTripPublicStatus(trip.id, !trip.isPublic);
+      showSuccess(
+        trip.isPublic ? 'Trip Made Private' : 'Trip Made Public', 
+        trip.isPublic 
+          ? 'Your trip is now private and won\'t appear in Discover' 
+          : 'Your trip is now public and will appear in Discover'
+      );
+    } catch (error) {
+      showError('Update Failed', 'Failed to update trip visibility. Please try again.');
+    }
+  };
+
+  const handleShareTrip = (trip: Trip) => {
+    // If trip is not public, make it public first
+    if (!trip.isPublic) {
+      updateTripPublicStatus(trip.id, true)
+        .then(() => {
+          setSelectedTrip({...trip, isPublic: true});
+          setShowShareModal(true);
+        })
+        .catch(error => {
+          showError('Update Failed', 'Failed to make trip public. Please try again.');
+        });
+    } else {
+      setShowShareModal(true);
     }
   };
 
@@ -99,13 +134,24 @@ export function TripsPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <ItineraryDisplay trip={selectedTrip} />
+            <ItineraryDisplay 
+              trip={selectedTrip} 
+              onSave={() => handleShareTrip(selectedTrip)}
+            />
           </div>
           
           <div className="lg:col-span-1">
             <AITravelCompanion trip={selectedTrip} className="sticky top-8" />
           </div>
         </div>
+
+        {/* Share Modal */}
+        {showShareModal && (
+          <CreatePost 
+            onClose={() => setShowShareModal(false)} 
+            selectedTrip={selectedTrip}
+          />
+        )}
       </div>
     );
   }
@@ -159,6 +205,8 @@ export function TripsPage() {
                     trip={trip}
                     onDelete={() => handleDeleteTrip(trip.id)}
                     onView={() => handleViewTrip(trip)}
+                    onTogglePublic={() => handleTogglePublic(trip)}
+                    onShare={() => handleShareTrip(trip)}
                   />
                 ))}
               </div>
@@ -181,9 +229,11 @@ interface TripCardProps {
   trip: Trip;
   onDelete: () => void;
   onView: () => void;
+  onTogglePublic: () => void;
+  onShare: () => void;
 }
 
-function TripCard({ trip, onDelete, onView }: TripCardProps) {
+function TripCard({ trip, onDelete, onView, onTogglePublic, onShare }: TripCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -269,20 +319,47 @@ function TripCard({ trip, onDelete, onView }: TripCardProps) {
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <button 
-            onClick={onView}
-            className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
-          >
-            <Eye className="w-4 h-4 mr-1" />
-            View Details
-          </button>
-          <button
-            onClick={onDelete}
-            className="flex items-center text-red-600 hover:text-red-700 text-sm font-medium"
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            Delete
-          </button>
+          <div className="flex space-x-2">
+            <button 
+              onClick={onView}
+              className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
+              <Eye className="w-4 h-4 mr-1" />
+              View
+            </button>
+            <button
+              onClick={onTogglePublic}
+              className="flex items-center text-gray-600 hover:text-gray-700 text-sm font-medium"
+            >
+              {trip.isPublic ? (
+                <>
+                  <Lock className="w-4 h-4 mr-1" />
+                  Make Private
+                </>
+              ) : (
+                <>
+                  <Globe className="w-4 h-4 mr-1" />
+                  Make Public
+                </>
+              )}
+            </button>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={onShare}
+              className="flex items-center text-green-600 hover:text-green-700 text-sm font-medium"
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              Share
+            </button>
+            <button
+              onClick={onDelete}
+              className="flex items-center text-red-600 hover:text-red-700 text-sm font-medium"
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>

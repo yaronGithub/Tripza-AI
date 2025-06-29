@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, MapPin, Calendar, Users, Eye, MoreHorizontal, User } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, MapPin, Calendar, Users, Eye, MoreHorizontal, User, Send, X } from 'lucide-react';
 import { useSocial } from '../hooks/useSocial';
-import { SocialPost } from '../types/social';
+import { SocialPost, PostComment } from '../types/social';
 import { ImageGallery } from './ImageGallery';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from './NotificationToast';
@@ -10,11 +10,15 @@ import { googleMapsService } from '../services/googleMapsService';
 import { imageService } from '../services/imageService';
 
 export function SocialFeed() {
-  const { posts, loading, likePost, savePost } = useSocial();
+  const { posts, loading, likePost, savePost, getPostComments, addComment } = useSocial();
   const { user } = useAuth();
-  const { showInfo } = useToast();
+  const { showInfo, showError } = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const [postImages, setPostImages] = useState<Record<string, string[]>>({});
+  const [expandedPost, setExpandedPost] = useState<string | null>(null);
+  const [comments, setComments] = useState<Record<string, PostComment[]>>({});
+  const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
+  const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
     // Simulate a refresh when component mounts
@@ -158,6 +162,49 @@ export function SocialFeed() {
     }
     
     return [];
+  };
+
+  const toggleComments = async (postId: string) => {
+    if (expandedPost === postId) {
+      setExpandedPost(null);
+      return;
+    }
+    
+    setExpandedPost(postId);
+    
+    // Load comments if not already loaded
+    if (!comments[postId]) {
+      setLoadingComments(prev => ({ ...prev, [postId]: true }));
+      try {
+        const postComments = await getPostComments(postId);
+        setComments(prev => ({ ...prev, [postId]: postComments }));
+      } catch (error) {
+        console.error('Error loading comments:', error);
+      } finally {
+        setLoadingComments(prev => ({ ...prev, [postId]: false }));
+      }
+    }
+  };
+
+  const handleAddComment = async (postId: string) => {
+    if (!user) {
+      showInfo('Sign In Required', 'Please sign in to comment');
+      return;
+    }
+    
+    if (!newComment.trim()) return;
+    
+    try {
+      const comment = await addComment(postId, newComment);
+      setComments(prev => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), comment]
+      }));
+      setNewComment('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      showError('Comment Failed', 'Failed to add comment. Please try again.');
+    }
   };
 
   if (loading) {
@@ -359,7 +406,12 @@ export function SocialFeed() {
                   <span className="font-medium">Like</span>
                 </button>
                 
-                <button className="flex items-center space-x-2 text-gray-600 hover:text-blue-500 transition-colors">
+                <button 
+                  onClick={() => toggleComments(post.id)}
+                  className={`flex items-center space-x-2 transition-colors ${
+                    expandedPost === post.id ? 'text-blue-500' : 'text-gray-600 hover:text-blue-500'
+                  }`}
+                >
                   <MessageCircle className="w-5 h-5" />
                   <span className="font-medium">Comment</span>
                 </button>
@@ -380,6 +432,87 @@ export function SocialFeed() {
               </button>
             </div>
           </div>
+
+          {/* Comments Section */}
+          {expandedPost === post.id && (
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <h4 className="font-medium text-gray-900 mb-4">Comments</h4>
+              
+              {/* Comments List */}
+              <div className="space-y-4 mb-4 max-h-80 overflow-y-auto">
+                {loadingComments[post.id] ? (
+                  <div className="flex justify-center py-4">
+                    <LoadingSpinner size="sm" color="blue" text="Loading comments..." />
+                  </div>
+                ) : comments[post.id]?.length ? (
+                  comments[post.id].map(comment => (
+                    <div key={comment.id} className="flex space-x-3">
+                      <img
+                        src={comment.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user?.name || 'User')}&background=6366f1&color=fff`}
+                        alt={comment.user?.name || 'User'}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1">
+                        <div className="bg-white p-3 rounded-lg shadow-sm">
+                          <div className="font-medium text-gray-900 text-sm">{comment.user?.name || 'User'}</div>
+                          <p className="text-gray-700 text-sm">{comment.content}</p>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 ml-2">
+                          {formatTimeAgo(comment.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <p>No comments yet. Be the first to comment!</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Add Comment */}
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <img
+                    src={user?.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'User')}&background=6366f1&color=fff`}
+                    alt={user?.user_metadata?.name || 'User'}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="w-full px-4 py-2 pr-10 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newComment.trim()) {
+                          handleAddComment(post.id);
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => handleAddComment(post.id)}
+                      disabled={!newComment.trim()}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-700 disabled:text-gray-400"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-2">Sign in to add a comment</p>
+                  <button
+                    onClick={() => showInfo('Sign In Required', 'Please sign in to comment on posts')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Sign In
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ))}
     </div>
