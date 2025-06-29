@@ -9,6 +9,13 @@ import { useTrips } from '../hooks/useTrips';
 import { useAttractions } from '../hooks/useAttractions';
 import { useToast } from '../components/NotificationToast';
 import { openaiService } from '../services/openaiService';
+import { AIDestinationAnalysis } from '../components/AIDestinationAnalysis';
+import { AICuisineGuide } from '../components/AICuisineGuide';
+import { AILanguageAssistant } from '../components/AILanguageAssistant';
+import { AIPhotoGenerator } from '../components/AIPhotoGenerator';
+import { AICustomItinerary } from '../components/AICustomItinerary';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
+import { Brain, Utensils, Globe, Camera, Lightbulb } from 'lucide-react';
 
 export function CreateTripPage() {
   const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
@@ -16,6 +23,7 @@ export function CreateTripPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [saveLoading, setSaveLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('generator');
 
   const { user } = useAuth();
   const { saveTrip } = useTrips(user?.id);
@@ -145,7 +153,7 @@ export function CreateTripPage() {
           {/* Page Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              AI-Powered Trip Planning
+              AI-Powered Travel Planning
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Experience the future of travel planning. Our advanced AI creates personalized itineraries with Google Maps integration, 
@@ -153,7 +161,69 @@ export function CreateTripPage() {
             </p>
           </div>
 
-          <AITripGenerator onTripGenerated={handleFormSubmit} isLoading={isLoading} />
+          {/* Tabs for different AI tools */}
+          <div className="max-w-6xl mx-auto mb-12">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid grid-cols-5 mb-8">
+                <TabsTrigger value="generator" className="flex items-center">
+                  <Brain className="w-5 h-5 mr-2" />
+                  <span>Trip Generator</span>
+                </TabsTrigger>
+                <TabsTrigger value="destination" className="flex items-center">
+                  <Globe className="w-5 h-5 mr-2" />
+                  <span>Destination Guide</span>
+                </TabsTrigger>
+                <TabsTrigger value="cuisine" className="flex items-center">
+                  <Utensils className="w-5 h-5 mr-2" />
+                  <span>Cuisine Guide</span>
+                </TabsTrigger>
+                <TabsTrigger value="language" className="flex items-center">
+                  <MessageSquare className="w-5 h-5 mr-2" />
+                  <span>Language Assistant</span>
+                </TabsTrigger>
+                <TabsTrigger value="photos" className="flex items-center">
+                  <Camera className="w-5 h-5 mr-2" />
+                  <span>Photo Generator</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="generator">
+                <AITripGenerator onTripGenerated={handleFormSubmit} isLoading={isLoading} />
+              </TabsContent>
+              
+              <TabsContent value="destination">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <AIDestinationAnalysis 
+                    destination="Paris" 
+                    preferences={['Art & Culture', 'Historical Sites', 'Restaurants & Foodie Spots']} 
+                  />
+                  <AICustomItinerary 
+                    destination="Paris" 
+                    preferences={['Art & Culture', 'Historical Sites', 'Restaurants & Foodie Spots']} 
+                    duration={3}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="cuisine">
+                <AICuisineGuide 
+                  destination="Paris" 
+                  preferences={['Restaurants & Foodie Spots']} 
+                />
+              </TabsContent>
+              
+              <TabsContent value="language">
+                <AILanguageAssistant destination="Paris" />
+              </TabsContent>
+              
+              <TabsContent value="photos">
+                <AIPhotoGenerator 
+                  destination="Paris" 
+                  preferences={['Art & Culture', 'Historical Sites']} 
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
           
           {/* Enhanced Benefits Section */}
           <div className="mt-16 max-w-6xl mx-auto">
@@ -214,5 +284,25 @@ export function CreateTripPage() {
         onModeChange={setAuthMode}
       />
     </div>
+  );
+}
+
+// Import missing component
+function MessageSquare(props: any) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
   );
 }

@@ -251,6 +251,125 @@ class OpenAIService {
     }
   }
 
+  async analyzeDestination(destination: string, preferences: string[]): Promise<any> {
+    if (!this.apiKey) {
+      return this.generateFallbackDestinationAnalysis(destination);
+    }
+
+    try {
+      const prompt = `Provide a comprehensive travel analysis for ${destination} focused on these interests: ${preferences.join(', ')}.
+      
+      Return a JSON object with these fields:
+      - bestTimeToVisit: When to go and why
+      - localCuisine: Array of 3 must-try foods or dining experiences
+      - culturalInsights: Array of 3 important cultural norms or practices
+      - hiddenGems: Array of 3 off-the-beaten-path attractions locals love
+      - transportationTips: Best ways to get around
+      - safetyInfo: Important safety information
+      - packingRecommendations: What to bring based on climate and activities
+      - languageTips: Essential phrases or communication advice
+      
+      Make it specific, practical, and focused on ${destination}.`;
+
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a destination expert with deep local knowledge of cities worldwide. Provide specific, practical information that helps travelers have an authentic experience.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data: OpenAIResponse = await response.json();
+      const content = data.choices[0]?.message?.content || '';
+      
+      try {
+        const analysis = JSON.parse(content);
+        return analysis;
+      } catch (parseError) {
+        console.error('Error parsing destination analysis:', parseError);
+        return this.generateFallbackDestinationAnalysis(destination);
+      }
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return this.generateFallbackDestinationAnalysis(destination);
+    }
+  }
+
+  async generateCustomItinerary(destination: string, preferences: string[], duration: number, specialRequests: string): Promise<any> {
+    if (!this.apiKey) {
+      return null;
+    }
+
+    try {
+      const prompt = `Create a personalized ${duration}-day itinerary for ${destination} focused on these interests: ${preferences.join(', ')}.
+      
+      Special requests: ${specialRequests}
+      
+      For each day, provide:
+      - Day number and theme
+      - Morning activities (2-3 specific attractions)
+      - Afternoon activities (2-3 specific attractions)
+      - Evening activities (1-2 specific attractions or dining)
+      - Local tips for that day
+      
+      Make it realistic, considering geography and travel time between attractions.
+      Include specific attraction names, not generic activities.
+      Focus on the traveler's interests and special requests.`;
+
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert travel planner who creates detailed, personalized itineraries. You know the geography of destinations worldwide and can create realistic daily plans that minimize travel time and maximize experiences.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data: OpenAIResponse = await response.json();
+      return data.choices[0]?.message?.content || '';
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return null;
+    }
+  }
+
   async generateSocialPostCaption(trip: any, photos: string[]): Promise<string> {
     if (!this.apiKey) {
       return `Just completed an amazing trip to ${trip.destination}! ${trip.preferences?.join(' ') || ''} #TripzaAI #Travel`;
@@ -402,6 +521,65 @@ class OpenAIService {
     }
   }
 
+  async generateLocalCuisineGuide(destination: string, preferences: string[]): Promise<any> {
+    if (!this.apiKey) {
+      return this.generateFallbackCuisineGuide(destination);
+    }
+
+    try {
+      const prompt = `Create a local cuisine guide for ${destination}.
+      
+      Return a JSON object with:
+      - mustTryDishes: Array of 5 must-try local dishes with brief descriptions
+      - bestRestaurants: Array of 3 recommended restaurants (name, specialty, price range)
+      - foodMarkets: Array of 2 local food markets or street food areas
+      - diningTips: 3 local dining customs or tips
+      - dietaryOptions: Information for travelers with dietary restrictions
+      
+      Make it specific to ${destination} with authentic local recommendations.`;
+
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a culinary expert with deep knowledge of local cuisines worldwide. Provide authentic, specific food recommendations that travelers would not find in typical tourist guides.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data: OpenAIResponse = await response.json();
+      const content = data.choices[0]?.message?.content || '';
+      
+      try {
+        return JSON.parse(content);
+      } catch (parseError) {
+        console.error('Error parsing cuisine guide:', parseError);
+        return this.generateFallbackCuisineGuide(destination);
+      }
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return this.generateFallbackCuisineGuide(destination);
+    }
+  }
+
   private generateFallbackDescription(destination: string, preferences: string[], duration: number): string {
     const preferenceText = preferences.length > 0 ? preferences.join(', ').toLowerCase() : 'sightseeing';
     
@@ -439,6 +617,58 @@ class OpenAIService {
         'Ask locals for their favorite hidden spots',
         'Participate in cultural events and festivals'
       ]
+    };
+  }
+
+  private generateFallbackDestinationAnalysis(destination: string): any {
+    return {
+      bestTimeToVisit: 'Spring and fall offer the most pleasant weather with fewer crowds',
+      localCuisine: [
+        'Try the regional specialty dishes',
+        'Visit local markets for authentic flavors',
+        'Don\'t miss the street food experience'
+      ],
+      culturalInsights: [
+        'Respect local customs and traditions',
+        'Learn basic greeting phrases',
+        'Observe appropriate dress codes at religious sites'
+      ],
+      hiddenGems: [
+        'Explore neighborhoods outside the tourist center',
+        'Visit local parks and green spaces',
+        'Check out small museums and galleries'
+      ],
+      transportationTips: 'Public transportation is efficient and affordable. Consider getting a transit pass for your stay.',
+      safetyInfo: 'Generally safe for tourists. Keep valuables secure and be aware of your surroundings in crowded areas.',
+      packingRecommendations: 'Pack layers for variable weather, comfortable walking shoes, and a universal power adapter.',
+      languageTips: 'Learn basic phrases like "hello," "thank you," and "excuse me" in the local language.'
+    };
+  }
+
+  private generateFallbackCuisineGuide(destination: string): any {
+    return {
+      mustTryDishes: [
+        'Local Specialty 1 - A traditional dish with rich flavors',
+        'Local Specialty 2 - Popular street food loved by locals',
+        'Local Specialty 3 - Classic comfort food with regional ingredients',
+        'Local Specialty 4 - Unique dessert with cultural significance',
+        'Local Specialty 5 - Signature beverage or drink'
+      ],
+      bestRestaurants: [
+        { name: 'Traditional Restaurant', specialty: 'Authentic local cuisine', priceRange: 'Moderate' },
+        { name: 'Local Favorite', specialty: 'Family recipes', priceRange: 'Budget-friendly' },
+        { name: 'Upscale Dining', specialty: 'Modern interpretations of classic dishes', priceRange: 'High-end' }
+      ],
+      foodMarkets: [
+        'Central Market - Bustling food hall with various vendors',
+        'Street Food District - Area known for authentic street food stalls'
+      ],
+      diningTips: [
+        'Meal times may differ from what you\'re used to',
+        'Tipping customs vary by location',
+        'Reservations recommended for popular restaurants'
+      ],
+      dietaryOptions: 'Vegetarian options are increasingly available. Communicate dietary restrictions clearly, preferably in the local language.'
     };
   }
 }
