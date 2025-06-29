@@ -42,6 +42,14 @@ export function GoogleMapsImageGallery({
       setLoading(true);
       setError(false);
 
+      // Check if Google Maps is available
+      if (!googleMapsService.isAvailable()) {
+        console.warn('Google Maps not available for image loading');
+        setError(true);
+        setLoading(false);
+        return;
+      }
+
       let photos: string[] = [];
 
       // If we have a place ID, get photos directly
@@ -52,7 +60,7 @@ export function GoogleMapsImageGallery({
             photos = googleMapsService.getPlacePhotos(placeDetails, 5);
           }
         } catch (err) {
-          console.error('Error getting place details:', err);
+          console.warn('Error getting place details:', err);
         }
       }
 
@@ -72,7 +80,7 @@ export function GoogleMapsImageGallery({
             }
           }
         } catch (err) {
-          console.error('Error searching for place:', err);
+          console.warn('Error searching for place:', err);
         }
       }
 

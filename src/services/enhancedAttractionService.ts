@@ -17,10 +17,17 @@ class EnhancedAttractionService {
     }
 
     try {
+      // Check if Google Maps is available
+      if (!googleMapsService.isAvailable()) {
+        console.warn('Google Maps not available, using fallback attraction service');
+        return attractionService.searchAttractions(destination, preferences, limit);
+      }
+
       // First, get coordinates for the destination
       const coordinates = await this.geocodeDestination(destination);
       if (!coordinates) {
-        throw new Error(`Could not find coordinates for ${destination}`);
+        console.warn(`Could not find coordinates for ${destination}, using fallback`);
+        return attractionService.searchAttractions(destination, preferences, limit);
       }
 
       // Try Google Places first for the best results
@@ -92,7 +99,8 @@ class EnhancedAttractionService {
             }
           }
         } catch (preferenceError) {
-          console.error(`Error searching for ${preference}:`, preferenceError);
+          console.warn(`Error searching for ${preference}:`, preferenceError.message);
+          // Continue with other preferences instead of failing completely
         }
       }
 
@@ -106,18 +114,22 @@ class EnhancedAttractionService {
   private async geocodeDestination(destination: string): Promise<{lat: number, lng: number} | null> {
     try {
       // Use Google Geocoding API if available
-      if (import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
-        const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(destination)}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
-        );
-        const data = await response.json();
-        
-        if (data.results && data.results.length > 0) {
-          const location = data.results[0].geometry.location;
-          return {
-            lat: location.lat,
-            lng: location.lng
-          };
+      if (googleMapsService.isAvailable() && import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(destination)}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+          );
+          const data = await response.json();
+          
+          if (data.results && data.results.length > 0) {
+            const location = data.results[0].geometry.location;
+            return {
+              lat: location.lat,
+              lng: location.lng
+            };
+          }
+        } catch (googleError) {
+          console.warn('Google Geocoding failed, trying fallback:', googleError);
         }
       }
 
@@ -153,6 +165,10 @@ class EnhancedAttractionService {
   // Get enhanced attraction details with Google data
   async getAttractionDetails(attractionId: string): Promise<any> {
     try {
+      if (!googleMapsService.isAvailable()) {
+        return null;
+      }
+
       // If it's a Google place, get fresh details
       if (attractionId.startsWith('google-') || attractionId.includes('ChIJ')) {
         const placeDetails = await googleMapsService.getPlaceDetails(attractionId);

@@ -2,15 +2,33 @@ class GoogleMapsService {
   private apiKey: string | undefined;
   private placesService: google.maps.places.PlacesService | null = null;
   private map: google.maps.Map | null = null;
+  private initialized: boolean = false;
+  private initializationFailed: boolean = false;
 
   constructor() {
     this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   }
 
+  // Check if Google Maps is available
+  isAvailable(): boolean {
+    return !!(this.apiKey && typeof google !== 'undefined' && google.maps);
+  }
+
   // Initialize Google Maps services
   async initialize(): Promise<void> {
+    if (this.initialized || this.initializationFailed) {
+      return;
+    }
+
     if (!this.apiKey) {
-      console.warn('Google Maps API key not found');
+      console.warn('Google Maps API key not found. Google Maps features will be disabled.');
+      this.initializationFailed = true;
+      return;
+    }
+
+    if (typeof google === 'undefined' || !google.maps) {
+      console.warn('Google Maps JavaScript API not loaded. Google Maps features will be disabled.');
+      this.initializationFailed = true;
       return;
     }
 
@@ -26,18 +44,25 @@ class GoogleMapsService {
       });
 
       this.placesService = new google.maps.places.PlacesService(this.map);
+      this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize Google Maps services:', error);
+      this.initializationFailed = true;
     }
   }
 
   // Search for places using Google Places API
   async searchPlaces(query: string, location?: { lat: number; lng: number }): Promise<google.maps.places.PlaceResult[]> {
-    if (!this.placesService) {
+    if (!this.isAvailable()) {
+      throw new Error('Google Maps API not available');
+    }
+
+    if (!this.placesService && !this.initializationFailed) {
       await this.initialize();
-      if (!this.placesService) {
-        throw new Error('Google Places service not available');
-      }
+    }
+    
+    if (!this.placesService) {
+      throw new Error('Google Places service not available');
     }
 
     return new Promise((resolve, reject) => {
@@ -59,11 +84,16 @@ class GoogleMapsService {
 
   // Get detailed place information including photos
   async getPlaceDetails(placeId: string): Promise<google.maps.places.PlaceResult | null> {
-    if (!this.placesService) {
+    if (!this.isAvailable()) {
+      throw new Error('Google Maps API not available');
+    }
+
+    if (!this.placesService && !this.initializationFailed) {
       await this.initialize();
-      if (!this.placesService) {
-        throw new Error('Google Places service not available');
-      }
+    }
+    
+    if (!this.placesService) {
+      throw new Error('Google Places service not available');
     }
 
     return new Promise((resolve, reject) => {
@@ -116,11 +146,16 @@ class GoogleMapsService {
     type: string,
     radius: number = 10000
   ): Promise<google.maps.places.PlaceResult[]> {
-    if (!this.placesService) {
+    if (!this.isAvailable()) {
+      throw new Error('Google Maps API not available');
+    }
+
+    if (!this.placesService && !this.initializationFailed) {
       await this.initialize();
-      if (!this.placesService) {
-        throw new Error('Google Places service not available');
-      }
+    }
+    
+    if (!this.placesService) {
+      throw new Error('Google Places service not available');
     }
 
     const typeMapping: Record<string, string[]> = {
