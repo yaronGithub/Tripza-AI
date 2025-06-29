@@ -25,6 +25,8 @@ export interface Attraction {
   phoneNumber?: string;
   priceLevel?: number;
   userRatingsTotal?: number;
+  // AI Enhancement
+  aiEnhanced?: boolean;
 }
 
 export interface DayPlan {
@@ -47,6 +49,7 @@ export interface Trip {
   updatedAt: string;
   title?: string;
   description?: string;
+  aiTravelTips?: string[];
 }
 
 export interface TripFormData {

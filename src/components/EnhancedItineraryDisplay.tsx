@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Star, Navigation, Edit, Eye, Share2, Route, Brain, TrendingUp, Lightbulb, Cloud } from 'lucide-react';
+import { Calendar, Clock, MapPin, Star, Navigation, Edit, Eye, Share2, Route, Brain, TrendingUp, Lightbulb, Cloud, Sparkles } from 'lucide-react';
 import { Trip } from '../types';
 import { MapView } from './MapView';
 import { TripEditor } from './TripEditor';
@@ -7,6 +7,7 @@ import { RouteOptimizer } from './RouteOptimizer';
 import { DestinationHero } from './DestinationHero';
 import { AttractionCard } from './AttractionCard';
 import { AIInsights } from './AIInsights';
+import { AITravelInsights } from './AITravelInsights';
 import { TripStats } from './TripStats';
 import { WeatherWidget } from './WeatherWidget';
 import { TravelTips } from './TravelTips';
@@ -20,7 +21,7 @@ interface EnhancedItineraryDisplayProps {
 }
 
 export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = false, onTripUpdate }: EnhancedItineraryDisplayProps) {
-  const [viewMode, setViewMode] = useState<'view' | 'edit' | 'map' | 'optimize' | 'insights'>('view');
+  const [viewMode, setViewMode] = useState<'view' | 'edit' | 'map' | 'optimize' | 'insights' | 'ai-analysis'>('view');
   const [selectedMapDay, setSelectedMapDay] = useState(0);
   const [currentTrip, setCurrentTrip] = useState(trip);
 
@@ -77,6 +78,9 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
   }
 
   const tripDates = currentTrip.itinerary.map(day => day.date);
+  const aiEnhancedCount = currentTrip.itinerary.reduce((sum, day) => 
+    sum + day.attractions.filter(attr => attr.aiEnhanced).length, 0
+  );
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -94,12 +98,26 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
         <div className="px-8 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {currentTrip.title || `Trip to ${currentTrip.destination}`}
-              </h1>
+              <div className="flex items-center mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {currentTrip.title || `Trip to ${currentTrip.destination}`}
+                </h1>
+                {aiEnhancedCount > 0 && (
+                  <div className="ml-3 px-3 py-1 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full flex items-center">
+                    <Sparkles className="w-4 h-4 text-purple-600 mr-1" />
+                    <span className="text-xs font-semibold text-purple-700">AI Enhanced</span>
+                  </div>
+                )}
+              </div>
               {currentTrip.description && (
-                <p className="text-gray-600 max-w-2xl">
+                <p className="text-gray-600 max-w-2xl leading-relaxed">
                   {currentTrip.description}
+                </p>
+              )}
+              {aiEnhancedCount > 0 && (
+                <p className="text-sm text-purple-600 mt-2 flex items-center">
+                  <Brain className="w-4 h-4 mr-1" />
+                  {aiEnhancedCount} attractions enhanced with AI-powered descriptions
                 </p>
               )}
             </div>
@@ -171,6 +189,17 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
               Route Optimizer
             </button>
             <button
+              onClick={() => setViewMode('ai-analysis')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                viewMode === 'ai-analysis'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Brain className="w-4 h-4 inline mr-2" />
+              AI Analysis
+            </button>
+            <button
               onClick={() => setViewMode('insights')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'insights'
@@ -178,8 +207,8 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
                   : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <Brain className="w-4 h-4 inline mr-2" />
-              AI Insights
+              <TrendingUp className="w-4 h-4 inline mr-2" />
+              Trip Insights
             </button>
           </div>
         </div>
@@ -195,7 +224,7 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
       ) : viewMode === 'optimize' ? (
         <div className="space-y-6">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Route Optimization</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Route Optimization</h2>
             <p className="text-gray-600">Optimize each day's route to minimize travel time and maximize exploration</p>
           </div>
           
@@ -218,28 +247,64 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
             </div>
           ))}
         </div>
-      ) : viewMode === 'insights' ? (
+      ) : viewMode === 'ai-analysis' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column */}
           <div className="space-y-8">
-            <AIInsights trip={currentTrip} />
+            <AITravelInsights />
             <TripStats trip={currentTrip} />
           </div>
           
           {/* Right Column */}
           <div className="space-y-8">
+            <AIInsights trip={currentTrip} />
             <WeatherWidget 
               destination={currentTrip.destination} 
               dates={tripDates} 
             />
+          </div>
+        </div>
+      ) : viewMode === 'insights' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column */}
+          <div className="space-y-8">
+            <TripStats trip={currentTrip} />
+            <WeatherWidget 
+              destination={currentTrip.destination} 
+              dates={tripDates} 
+            />
+          </div>
+          
+          {/* Right Column */}
+          <div className="space-y-8">
             <TravelTips 
               destination={currentTrip.destination}
               preferences={currentTrip.preferences}
             />
+            {currentTrip.aiTravelTips && (
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mr-3">
+                    <Brain className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">AI Travel Tips</h3>
+                    <p className="text-sm text-purple-600">Personalized advice from our AI</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {currentTrip.aiTravelTips.map((tip, index) => (
+                    <div key={index} className="p-3 bg-purple-50 rounded-lg border border-purple-100">
+                      <p className="text-gray-700 text-sm leading-relaxed">{tip}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ) : (
-        /* Daily Itinerary with Beautiful Images */
+        /* Daily Itinerary with AI-Enhanced Content */
         <div className="space-y-8">
           {currentTrip.itinerary.map((day, dayIndex) => (
             <div key={day.date} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
@@ -258,6 +323,12 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
                       <Navigation className="w-4 h-4 mr-1" />
                       {formatDuration(day.estimatedTravelTime)} travel
                     </div>
+                    {day.attractions.some(attr => attr.aiEnhanced) && (
+                      <div className="flex items-center text-purple-600">
+                        <Sparkles className="w-4 h-4 mr-1" />
+                        AI Enhanced
+                      </div>
+                    )}
                     <button
                       onClick={() => {
                         setSelectedMapDay(dayIndex);
@@ -277,13 +348,20 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
                 {day.attractions.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {day.attractions.map((attraction, index) => (
-                      <AttractionCard
-                        key={attraction.id}
-                        attraction={attraction}
-                        city={currentTrip.destination}
-                        showGallery={true}
-                        className="h-full"
-                      />
+                      <div key={attraction.id} className="relative">
+                        <AttractionCard
+                          attraction={attraction}
+                          city={currentTrip.destination}
+                          showGallery={true}
+                          className="h-full"
+                        />
+                        {attraction.aiEnhanced && (
+                          <div className="absolute top-3 left-3 z-10 px-2 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-full text-xs font-semibold flex items-center">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            AI
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ) : (

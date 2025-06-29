@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TripPlanningForm } from '../components/TripPlanningForm';
+import { AITripGenerator } from '../components/AITripGenerator';
 import { EnhancedItineraryDisplay } from '../components/EnhancedItineraryDisplay';
 import { AuthModal } from '../components/AuthModal';
 import { TripFormData, Trip } from '../types';
@@ -26,12 +26,12 @@ export function CreateTripPage() {
     setIsLoading(true);
     
     try {
-      showInfo('AI Planning Started', `Creating your personalized ${formData.destination} experience...`);
+      showInfo('AI Planning Started', `Creating your personalized ${formData.destination} experience with advanced AI...`);
       
       // Calculate trip duration
       const daysCount = Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 3600 * 24)) + 1;
       
-      // Generate AI-enhanced trip title and description
+      // Generate AI-enhanced trip content and search attractions in parallel
       const [tripTitle, tripDescription, availableAttractions] = await Promise.all([
         openaiService.optimizeTripTitle(formData.destination, formData.preferences, daysCount),
         openaiService.generateTripDescription(formData.destination, formData.preferences, daysCount),
@@ -43,15 +43,31 @@ export function CreateTripPage() {
         return;
       }
 
-      showInfo('Optimizing Route', `Using AI to create the perfect ${daysCount}-day itinerary with ${availableAttractions.length} attractions...`);
+      showInfo('AI Enhancement', `Enhancing ${availableAttractions.length} attractions with personalized AI descriptions...`);
+      
+      // Enhance attraction descriptions with AI
+      const enhancedAttractions = await openaiService.generateSmartAttractionDescriptions(
+        availableAttractions, 
+        formData.destination, 
+        formData.preferences
+      );
+      
+      showInfo('Route Optimization', `Using AI to create the perfect ${daysCount}-day itinerary with intelligent route optimization...`);
       
       // Generate optimized itinerary
-      const itinerary = generateItinerary(formData, availableAttractions);
+      const itinerary = generateItinerary(formData, enhancedAttractions);
       
       if (itinerary.length === 0) {
         showError('Generation Failed', 'Failed to generate itinerary. Please try different dates or preferences.');
         return;
       }
+
+      // Generate AI travel tips for the destination
+      const travelTips = await openaiService.generateTravelTips(
+        formData.destination, 
+        formData.preferences, 
+        daysCount
+      );
 
       const newTrip: Trip = {
         id: Date.now().toString(),
@@ -65,15 +81,18 @@ export function CreateTripPage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         title: tripTitle,
-        description: tripDescription
+        description: tripDescription,
+        aiTravelTips: travelTips
       };
 
       setCurrentTrip(newTrip);
       
       const totalAttractions = itinerary.reduce((sum, day) => sum + day.attractions.length, 0);
+      const enhancedCount = enhancedAttractions.filter(a => a.aiEnhanced).length;
+      
       showSuccess(
         'AI Trip Generated!', 
-        `Your personalized ${itinerary.length}-day adventure with ${totalAttractions} attractions is ready!`
+        `Your personalized ${itinerary.length}-day adventure with ${totalAttractions} attractions is ready! ${enhancedCount} descriptions enhanced by AI.`
       );
     } catch (error) {
       console.error('Error generating itinerary:', error);
@@ -125,47 +144,62 @@ export function CreateTripPage() {
         <div>
           {/* Page Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               AI-Powered Trip Planning
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Experience the future of travel planning. Our AI creates personalized itineraries with Google Maps integration, 
-              real-time optimization, and intelligent recommendations tailored to your interests.
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Experience the future of travel planning. Our advanced AI creates personalized itineraries with Google Maps integration, 
+              real-time optimization, and intelligent recommendations tailored to your unique interests and travel style.
             </p>
           </div>
 
-          <TripPlanningForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+          <AITripGenerator onTripGenerated={handleFormSubmit} isLoading={isLoading} />
           
           {/* Enhanced Benefits Section */}
-          <div className="mt-16 max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-              <div className="p-6">
-                <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">🤖</span>
+          <div className="mt-16 max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Tripza AI is Revolutionary</h2>
+              <p className="text-lg text-gray-600">The world's first truly intelligent travel planning platform</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="text-center p-6 bg-white rounded-2xl shadow-lg border border-gray-100 hover-lift">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center pulse-glow">
+                  <span className="text-3xl">🤖</span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">AI-Enhanced Planning</h3>
-                <p className="text-gray-600 text-sm">
-                  Advanced AI creates personalized descriptions and optimizes your entire journey
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Real AI Intelligence</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  OpenAI GPT-4o-mini powers personalized descriptions, smart recommendations, and intelligent content creation
                 </p>
               </div>
               
-              <div className="p-6">
-                <div className="w-12 h-12 mx-auto mb-4 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">🗺️</span>
+              <div className="text-center p-6 bg-white rounded-2xl shadow-lg border border-gray-100 hover-lift">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl flex items-center justify-center pulse-glow">
+                  <span className="text-3xl">🗺️</span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Maps Integration</h3>
-                <p className="text-gray-600 text-sm">
-                  Real-time directions, traffic data, and street view for professional navigation
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Real photos, professional directions, traffic data, and street view for the ultimate navigation experience
                 </p>
               </div>
               
-              <div className="p-6">
-                <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">⚡</span>
+              <div className="text-center p-6 bg-white rounded-2xl shadow-lg border border-gray-100 hover-lift">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center pulse-glow">
+                  <span className="text-3xl">⚡</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Lightning Fast</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Complete personalized itineraries generated in under 30 seconds with advanced route optimization
+                </p>
+              </div>
+              
+              <div className="text-center p-6 bg-white rounded-2xl shadow-lg border border-gray-100 hover-lift">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl flex items-center justify-center pulse-glow">
+                  <span className="text-3xl">🌍</span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Global Coverage</h3>
-                <p className="text-gray-600 text-sm">
-                  Plan trips to any destination worldwide with real attraction data and local insights
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Plan trips to any destination worldwide with real attraction data, local insights, and cultural recommendations
                 </p>
               </div>
             </div>
