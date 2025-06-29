@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, Sparkles, Map, Users, Clock, Star, Globe, Zap, Heart, Award, Rocket, Brain, Shield } from 'lucide-react';
+import { DemoVideoPlayer } from '../components/DemoVideoPlayer';
 
 interface HomePageProps {
   onNavigateToCreate: () => void;
 }
 
 export function HomePage({ onNavigateToCreate }: HomePageProps) {
+  const [showDemoVideo, setShowDemoVideo] = useState(false);
+
   const features = [
     {
       icon: <Brain className="w-8 h-8" />,
@@ -113,7 +116,10 @@ export function HomePage({ onNavigateToCreate }: HomePageProps) {
                 <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
               </button>
               
-              <button className="inline-flex items-center px-10 py-5 glass border-2 border-purple-300/50 text-purple-700 text-lg font-bold rounded-3xl hover-lift transition-premium">
+              <button 
+                onClick={() => setShowDemoVideo(true)}
+                className="inline-flex items-center px-10 py-5 glass border-2 border-purple-300/50 text-purple-700 text-lg font-bold rounded-3xl hover-lift transition-premium"
+              >
                 <Globe className="w-6 h-6 mr-3" />
                 Watch Demo
               </button>
@@ -295,6 +301,12 @@ export function HomePage({ onNavigateToCreate }: HomePageProps) {
           </button>
         </div>
       </section>
+
+      {/* Demo Video Player */}
+      <DemoVideoPlayer 
+        isOpen={showDemoVideo} 
+        onClose={() => setShowDemoVideo(false)} 
+      />
     </div>
   );
 }
