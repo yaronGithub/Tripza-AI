@@ -36,6 +36,14 @@ export function TripsPage() {
     setSelectedTrip(null);
   };
 
+  const handleNavigateToCreate = () => {
+    // Use window.location to navigate to the create page
+    window.location.href = '#';
+    // Dispatch a custom event that App.tsx can listen for
+    const event = new CustomEvent('navigate', { detail: { page: 'create' } });
+    window.dispatchEvent(event);
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
@@ -107,7 +115,10 @@ export function TripsPage() {
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
               Start planning your first adventure! Create a personalized itinerary in just a few minutes.
             </p>
-            <button className="bg-gradient-to-r from-blue-600 to-orange-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-orange-600 transition-all duration-200">
+            <button 
+              onClick={handleNavigateToCreate}
+              className="bg-gradient-to-r from-blue-600 to-orange-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-orange-600 transition-all duration-200"
+            >
               Plan Your First Trip
             </button>
           </div>
