@@ -79,7 +79,7 @@ export function CreateTripPage() {
       );
 
       const newTrip: Trip = {
-        id: Date.now().toString(),
+        id: `local-${Date.now()}`,
         destination: formData.destination,
         startDate: formData.startDate,
         endDate: formData.endDate,
