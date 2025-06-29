@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Star, Navigation, Edit, Eye, Share2, Route } from 'lucide-react';
 import { Trip } from '../types';
 import { MapView } from './MapView';
@@ -6,6 +6,10 @@ import { TripEditor } from './TripEditor';
 import { RouteOptimizer } from './RouteOptimizer';
 import { DestinationHero } from './DestinationHero';
 import { AttractionCard } from './AttractionCard';
+import { useAuth } from '../hooks/useAuth';
+import { useTrips } from '../hooks/useTrips';
+import { useToast } from '../components/NotificationToast';
+import { CreatePost } from './CreatePost';
 
 interface ItineraryDisplayProps {
   trip: Trip;
@@ -19,6 +23,36 @@ export function ItineraryDisplay({ trip, onEdit, onSave, saveLoading = false, on
   const [viewMode, setViewMode] = useState<'view' | 'edit' | 'map' | 'optimize'>('view');
   const [selectedMapDay, setSelectedMapDay] = useState(0);
   const [currentTrip, setCurrentTrip] = useState(trip);
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  
+  const { user } = useAuth();
+  const { saveTrip } = useTrips(user?.id);
+  const { showSuccess, showError } = useToast();
+
+  // Auto-save when trip is updated
+  useEffect(() => {
+    if (user && currentTrip !== trip) {
+      // Clear any existing timer
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+      }
+      
+      // Set a new timer to save after 3 seconds of inactivity
+      const timer = setTimeout(() => {
+        handleAutoSave();
+      }, 3000);
+      
+      setAutoSaveTimer(timer);
+    }
+    
+    return () => {
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+      }
+    };
+  }, [currentTrip]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -61,6 +95,36 @@ export function ItineraryDisplay({ trip, onEdit, onSave, saveLoading = false, on
     handleTripUpdate(updatedTrip);
   };
 
+  const handleAutoSave = async () => {
+    if (!user || !currentTrip) return;
+    
+    setAutoSaving(true);
+    try {
+      // Make sure the trip has the current user ID
+      const tripToSave = {
+        ...currentTrip,
+        userId: user.id
+      };
+      
+      await saveTrip(tripToSave);
+      showSuccess('Trip Auto-Saved', 'Your changes have been automatically saved');
+    } catch (error) {
+      console.error('Error auto-saving trip:', error);
+      showError('Auto-Save Failed', 'Failed to save your changes automatically. Please try saving manually.');
+    } finally {
+      setAutoSaving(false);
+    }
+  };
+
+  const handleShareTrip = () => {
+    // Update trip to be public
+    const updatedTrip = { ...currentTrip, isPublic: true };
+    handleTripUpdate(updatedTrip);
+    
+    // Open share modal
+    setShowShareModal(true);
+  };
+
   if (viewMode === 'edit') {
     return (
       <TripEditor
@@ -96,6 +160,12 @@ export function ItineraryDisplay({ trip, onEdit, onSave, saveLoading = false, on
                   {currentTrip.description}
                 </p>
               )}
+              {autoSaving && (
+                <p className="text-sm text-blue-600 mt-2 flex items-center">
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Auto-saving changes...
+                </p>
+              )}
             </div>
             <div className="mt-4 sm:mt-0 flex space-x-3">
               {onEdit && (
@@ -124,6 +194,15 @@ export function ItineraryDisplay({ trip, onEdit, onSave, saveLoading = false, on
                       Save Trip
                     </>
                   )}
+                </button>
+              )}
+              {user && (
+                <button
+                  onClick={handleShareTrip}
+                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-colors font-medium flex items-center"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share Trip
                 </button>
               )}
             </div>
@@ -290,6 +369,14 @@ export function ItineraryDisplay({ trip, onEdit, onSave, saveLoading = false, on
             </div>
           ))}
         </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <CreatePost 
+          onClose={() => setShowShareModal(false)} 
+          selectedTrip={currentTrip}
+        />
       )}
     </div>
   );

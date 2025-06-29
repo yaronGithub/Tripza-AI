@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Star, Navigation, Edit, Eye, Share2, Route, Brain, TrendingUp, Lightbulb, Cloud, Sparkles, Globe } from 'lucide-react';
 import { Trip } from '../types';
 import { MapView } from './MapView';
@@ -14,6 +14,7 @@ import { TravelTips } from './TravelTips';
 import { CreatePost } from './CreatePost';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from './NotificationToast';
+import { useTrips } from '../hooks/useTrips';
 
 interface EnhancedItineraryDisplayProps {
   trip: Trip;
@@ -28,8 +29,35 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
   const [selectedMapDay, setSelectedMapDay] = useState(0);
   const [currentTrip, setCurrentTrip] = useState(trip);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+  
   const { user } = useAuth();
-  const { showSuccess } = useToast();
+  const { saveTrip } = useTrips(user?.id);
+  const { showSuccess, showError } = useToast();
+
+  // Auto-save when trip is updated
+  useEffect(() => {
+    if (user && currentTrip !== trip) {
+      // Clear any existing timer
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+      }
+      
+      // Set a new timer to save after 3 seconds of inactivity
+      const timer = setTimeout(() => {
+        handleAutoSave();
+      }, 3000);
+      
+      setAutoSaveTimer(timer);
+    }
+    
+    return () => {
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+      }
+    };
+  }, [currentTrip]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -70,6 +98,27 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
     dayPlan.estimatedTravelTime = travelTime;
     
     handleTripUpdate(updatedTrip);
+  };
+
+  const handleAutoSave = async () => {
+    if (!user || !currentTrip) return;
+    
+    setAutoSaving(true);
+    try {
+      // Make sure the trip has the current user ID
+      const tripToSave = {
+        ...currentTrip,
+        userId: user.id
+      };
+      
+      await saveTrip(tripToSave);
+      showSuccess('Trip Auto-Saved', 'Your changes have been automatically saved');
+    } catch (error) {
+      console.error('Error auto-saving trip:', error);
+      showError('Auto-Save Failed', 'Failed to save your changes automatically. Please try saving manually.');
+    } finally {
+      setAutoSaving(false);
+    }
   };
 
   const handleShareTrip = () => {
@@ -139,6 +188,12 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
                 <p className="text-sm text-purple-600 mt-2 flex items-center">
                   <Brain className="w-4 h-4 mr-1" />
                   {aiEnhancedCount} attractions enhanced with AI-powered descriptions
+                </p>
+              )}
+              {autoSaving && (
+                <p className="text-sm text-blue-600 mt-2 flex items-center">
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Auto-saving changes...
                 </p>
               )}
             </div>

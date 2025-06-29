@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AITripGenerator } from '../components/AITripGenerator';
 import { EnhancedItineraryDisplay } from '../components/EnhancedItineraryDisplay';
 import { AuthModal } from '../components/AuthModal';
@@ -25,11 +25,36 @@ export function CreateTripPage() {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [saveLoading, setSaveLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('generator');
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
+  const [tripSaved, setTripSaved] = useState(false);
 
   const { user } = useAuth();
   const { saveTrip } = useTrips(user?.id);
   const { searchAttractions } = useAttractions();
   const { showSuccess, showError, showInfo } = useToast();
+
+  // Auto-save the trip when it changes
+  useEffect(() => {
+    if (currentTrip && user && !tripSaved) {
+      // Clear any existing timer
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+      }
+      
+      // Set a new timer to save after 3 seconds of inactivity
+      const timer = setTimeout(() => {
+        handleSaveTrip(true);
+      }, 3000);
+      
+      setAutoSaveTimer(timer);
+    }
+    
+    return () => {
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+      }
+    };
+  }, [currentTrip, user]);
 
   const handleFormSubmit = async (formData: TripFormData) => {
     setIsLoading(true);
@@ -95,6 +120,7 @@ export function CreateTripPage() {
       };
 
       setCurrentTrip(newTrip);
+      setTripSaved(false);
       
       const totalAttractions = itinerary.reduce((sum, day) => sum + day.attractions.length, 0);
       const enhancedCount = enhancedAttractions.filter(a => a.aiEnhanced).length;
@@ -111,7 +137,7 @@ export function CreateTripPage() {
     }
   };
 
-  const handleSaveTrip = async () => {
+  const handleSaveTrip = async (isAutoSave = false) => {
     if (!currentTrip) return;
 
     if (!user) {
@@ -119,24 +145,43 @@ export function CreateTripPage() {
       return;
     }
 
-    setSaveLoading(true);
+    if (!isAutoSave) {
+      setSaveLoading(true);
+    }
+    
     try {
-      await saveTrip(currentTrip);
-      showSuccess('Trip Saved!', 'Your AI-generated trip has been saved to your account.');
+      // Make sure the trip has the current user ID
+      const tripToSave = {
+        ...currentTrip,
+        userId: user.id
+      };
+      
+      await saveTrip(tripToSave);
+      setTripSaved(true);
+      
+      if (!isAutoSave) {
+        showSuccess('Trip Saved!', 'Your AI-generated trip has been saved to your account.');
+      }
     } catch (error) {
       console.error('Error saving trip:', error);
-      showError('Save Failed', 'Failed to save trip. Please try again.');
+      if (!isAutoSave) {
+        showError('Save Failed', 'Failed to save trip. Please try again.');
+      }
     } finally {
-      setSaveLoading(false);
+      if (!isAutoSave) {
+        setSaveLoading(false);
+      }
     }
   };
 
   const handleEditTrip = () => {
     setCurrentTrip(null);
+    setTripSaved(false);
   };
 
   const handleTripUpdate = (updatedTrip: Trip) => {
     setCurrentTrip(updatedTrip);
+    setTripSaved(false);
   };
 
   return (
@@ -148,7 +193,7 @@ export function CreateTripPage() {
             <EnhancedItineraryDisplay
               trip={currentTrip}
               onEdit={handleEditTrip}
-              onSave={handleSaveTrip}
+              onSave={() => handleSaveTrip(false)}
               saveLoading={saveLoading}
               onTripUpdate={handleTripUpdate}
             />
