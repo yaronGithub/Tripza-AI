@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, Bookmark, MapPin, Calendar, Users, Eye, MoreHorizontal, User } from 'lucide-react';
 import { useSocial } from '../hooks/useSocial';
 import { SocialPost } from '../types/social';
 import { ImageGallery } from './ImageGallery';
+import { useAuth } from '../hooks/useAuth';
+import { useToast } from './NotificationToast';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export function SocialFeed() {
   const { posts, loading, likePost, savePost } = useSocial();
+  const { user } = useAuth();
+  const { showInfo } = useToast();
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    // Simulate a refresh when component mounts
+    handleRefresh();
+  }, []);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -17,6 +28,23 @@ export function SocialFeed() {
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays}d ago`;
     return date.toLocaleDateString();
+  };
+
+  const handleViewTrip = (tripId: string) => {
+    // Navigate to trip view
+    const navigateEvent = new CustomEvent('navigateTo', { 
+      detail: { page: 'discover' } 
+    });
+    window.dispatchEvent(navigateEvent);
+    
+    showInfo('Trip View', 'Viewing shared trip details');
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Wait a bit to simulate loading
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setRefreshing(false);
   };
 
   if (loading) {
@@ -38,6 +66,37 @@ export function SocialFeed() {
             </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (refreshing) {
+    return (
+      <div className="flex justify-center py-8">
+        <LoadingSpinner size="md" color="blue" text="Refreshing feed..." />
+      </div>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
+        <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+          <Users className="w-10 h-10 text-gray-400" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">No posts yet</h3>
+        <p className="text-gray-600 mb-6">Be the first to share your travel experiences or follow other travelers to see their posts.</p>
+        <button 
+          onClick={() => {
+            const navigateEvent = new CustomEvent('navigateTo', { 
+              detail: { page: 'create' } 
+            });
+            window.dispatchEvent(navigateEvent);
+          }}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        >
+          Plan Your First Trip
+        </button>
       </div>
     );
   }
@@ -70,7 +129,7 @@ export function SocialFeed() {
                     )}
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
-                    <span>@{post.user?.username}</span>
+                    <span>@{post.user?.username || post.user?.name?.toLowerCase().replace(/\s+/g, '') || 'user'}</span>
                     <span className="mx-1">•</span>
                     <span>{formatTimeAgo(post.created_at)}</span>
                     {post.trip && (
@@ -95,7 +154,7 @@ export function SocialFeed() {
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-100">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-1">{post.trip.title}</h4>
+                    <h4 className="font-bold text-gray-900 mb-1">{post.trip.title || `Trip to ${post.trip.destination}`}</h4>
                     <div className="flex items-center text-sm text-gray-600">
                       <Calendar className="w-4 h-4 mr-1" />
                       <span>{new Date(post.trip.start_date).toLocaleDateString()} - {new Date(post.trip.end_date).toLocaleDateString()}</span>
@@ -104,7 +163,10 @@ export function SocialFeed() {
                       <span>{post.trip.preferences?.length || 0} interests</span>
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                  <button 
+                    onClick={() => handleViewTrip(post.trip.id)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
                     <Eye className="w-4 h-4 inline mr-1" />
                     View Trip
                   </button>
@@ -167,7 +229,7 @@ export function SocialFeed() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-6">
                 <button
-                  onClick={() => likePost(post.id)}
+                  onClick={() => user ? likePost(post.id) : showInfo('Sign In Required', 'Please sign in to like posts')}
                   className={`flex items-center space-x-2 transition-colors ${
                     post.is_liked ? 'text-red-500' : 'text-gray-600 hover:text-red-500'
                   }`}
@@ -188,7 +250,7 @@ export function SocialFeed() {
               </div>
               
               <button
-                onClick={() => savePost(post.id)}
+                onClick={() => user ? savePost(post.id) : showInfo('Sign In Required', 'Please sign in to save posts')}
                 className={`p-2 rounded-full transition-colors ${
                   post.is_saved ? 'text-blue-500 bg-blue-50' : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50'
                 }`}

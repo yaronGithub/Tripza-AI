@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { SocialPost, SocialProfile, PostComment, UserFollow } from '../types/social';
 import { useAuth } from './useAuth';
+import { Trip } from '../types';
+import { useTrips } from './useTrips';
 
 export function useSocial() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -10,9 +12,7 @@ export function useSocial() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      fetchSocialFeed();
-    }
+    fetchSocialFeed();
   }, [user]);
 
   const fetchSocialFeed = async () => {
@@ -25,8 +25,7 @@ export function useSocial() {
         .select(`
           *,
           user:profiles(*),
-          trip:trips(*),
-          post_likes!inner(user_id)
+          trip:trips(*)
         `)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -34,19 +33,24 @@ export function useSocial() {
       if (postsError) throw postsError;
 
       // Check which posts are liked by current user
-      const { data: userLikes } = await supabase
-        .from('post_likes')
-        .select('post_id')
-        .eq('user_id', user?.id);
+      let likedPostIds = new Set<string>();
+      let savedPostIds = new Set<string>();
+      
+      if (user) {
+        const { data: userLikes } = await supabase
+          .from('post_likes')
+          .select('post_id')
+          .eq('user_id', user.id);
 
-      // Check which posts are saved by current user
-      const { data: userSaved } = await supabase
-        .from('saved_posts')
-        .select('post_id')
-        .eq('user_id', user?.id);
+        // Check which posts are saved by current user
+        const { data: userSaved } = await supabase
+          .from('saved_posts')
+          .select('post_id')
+          .eq('user_id', user.id);
 
-      const likedPostIds = new Set(userLikes?.map(like => like.post_id) || []);
-      const savedPostIds = new Set(userSaved?.map(saved => saved.post_id) || []);
+        likedPostIds = new Set(userLikes?.map(like => like.post_id) || []);
+        savedPostIds = new Set(userSaved?.map(saved => saved.post_id) || []);
+      }
 
       const enrichedPosts = postsData?.map(post => ({
         ...post,
@@ -349,6 +353,8 @@ export function useTrendingData() {
   const [trendingDestinations, setTrendingDestinations] = useState<any[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<SocialProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { fetchPublicTrips } = useTrips(user?.id);
 
   useEffect(() => {
     fetchTrendingData();
@@ -356,6 +362,8 @@ export function useTrendingData() {
 
   const fetchTrendingData = async () => {
     try {
+      setLoading(true);
+      
       // Fetch trending destinations based on recent posts
       const { data: destinations } = await supabase
         .from('social_posts')
@@ -373,6 +381,16 @@ export function useTrendingData() {
         }
       });
 
+      // If we don't have enough trending destinations from posts, get some from public trips
+      if (Object.keys(destinationCounts).length < 5) {
+        const publicTrips = await fetchPublicTrips(20);
+        publicTrips.forEach(trip => {
+          if (trip.destination) {
+            destinationCounts[trip.destination] = (destinationCounts[trip.destination] || 0) + 1;
+          }
+        });
+      }
+
       const trending = Object.entries(destinationCounts)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 5)
@@ -382,7 +400,7 @@ export function useTrendingData() {
           trend: `+${Math.floor(Math.random() * 20) + 5}%`
         }));
 
-      setTrendingDestinations(trending);
+      setTrendingDestinations(trending.length > 0 ? trending : generateFallbackTrending());
 
       // Fetch suggested users (users with most followers)
       const { data: users } = await supabase
@@ -391,17 +409,119 @@ export function useTrendingData() {
         .order('followers_count', { ascending: false })
         .limit(5);
 
-      setSuggestedUsers(users || []);
+      if (users && users.length > 0) {
+        setSuggestedUsers(users);
+      } else {
+        setSuggestedUsers(generateFallbackUsers());
+      }
     } catch (err) {
       console.error('Error fetching trending data:', err);
+      setTrendingDestinations(generateFallbackTrending());
+      setSuggestedUsers(generateFallbackUsers());
     } finally {
       setLoading(false);
     }
   };
 
+  const generateFallbackTrending = () => {
+    return [
+      { name: 'Paris', posts: 42, trend: '+15%' },
+      { name: 'Tokyo', posts: 38, trend: '+12%' },
+      { name: 'New York', posts: 35, trend: '+10%' },
+      { name: 'Barcelona', posts: 29, trend: '+8%' },
+      { name: 'Bali', posts: 24, trend: '+7%' }
+    ];
+  };
+
+  const generateFallbackUsers = (): SocialProfile[] => {
+    return [
+      {
+        id: 'user-1',
+        email: 'sarah@example.com',
+        name: 'Sarah Chen',
+        username: 'sarahexplores',
+        bio: 'Travel photographer and adventure seeker',
+        avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b86b?w=100&h=100&fit=crop&crop=face',
+        location: 'San Francisco, CA',
+        website: 'https://sarahexplores.com',
+        verified: true,
+        followers_count: 1250,
+        following_count: 350,
+        posts_count: 87,
+        created_at: '2023-01-15T10:00:00Z',
+        updated_at: '2023-01-15T10:00:00Z'
+      },
+      {
+        id: 'user-2',
+        email: 'mike@example.com',
+        name: 'Mike Rodriguez',
+        username: 'miketravel',
+        bio: 'Exploring one city at a time',
+        avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+        location: 'Austin, TX',
+        website: null,
+        verified: false,
+        followers_count: 980,
+        following_count: 420,
+        posts_count: 65,
+        created_at: '2023-02-20T14:30:00Z',
+        updated_at: '2023-02-20T14:30:00Z'
+      },
+      {
+        id: 'user-3',
+        email: 'emma@example.com',
+        name: 'Emma Thompson',
+        username: 'emmatravels',
+        bio: 'Food and culture enthusiast',
+        avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
+        location: 'London, UK',
+        website: 'https://emmatravels.co.uk',
+        verified: true,
+        followers_count: 1450,
+        following_count: 280,
+        posts_count: 112,
+        created_at: '2023-03-10T09:15:00Z',
+        updated_at: '2023-03-10T09:15:00Z'
+      },
+      {
+        id: 'user-4',
+        email: 'alex@example.com',
+        name: 'Alex Johnson',
+        username: 'alexadventures',
+        bio: 'Adventure travel and hiking',
+        avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+        location: 'Denver, CO',
+        website: null,
+        verified: false,
+        followers_count: 850,
+        following_count: 310,
+        posts_count: 58,
+        created_at: '2023-04-05T11:20:00Z',
+        updated_at: '2023-04-05T11:20:00Z'
+      },
+      {
+        id: 'user-5',
+        email: 'olivia@example.com',
+        name: 'Olivia Kim',
+        username: 'oliviatravels',
+        bio: 'Luxury travel and hotel reviews',
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
+        location: 'New York, NY',
+        website: 'https://olivialuxurytravel.com',
+        verified: true,
+        followers_count: 2100,
+        following_count: 180,
+        posts_count: 95,
+        created_at: '2023-05-12T16:45:00Z',
+        updated_at: '2023-05-12T16:45:00Z'
+      }
+    ];
+  };
+
   return {
     trendingDestinations,
     suggestedUsers,
-    loading
+    loading,
+    refetch: fetchTrendingData
   };
 }

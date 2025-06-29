@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Star, Navigation, Edit, Eye, Share2, Route, Brain, TrendingUp, Lightbulb, Cloud, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MapPin, Star, Navigation, Edit, Eye, Share2, Route, Brain, TrendingUp, Lightbulb, Cloud, Sparkles, Globe } from 'lucide-react';
 import { Trip } from '../types';
 import { MapView } from './MapView';
 import { TripEditor } from './TripEditor';
@@ -11,6 +11,9 @@ import { AITravelInsights } from './AITravelInsights';
 import { TripStats } from './TripStats';
 import { WeatherWidget } from './WeatherWidget';
 import { TravelTips } from './TravelTips';
+import { CreatePost } from './CreatePost';
+import { useAuth } from '../hooks/useAuth';
+import { useToast } from './NotificationToast';
 
 interface EnhancedItineraryDisplayProps {
   trip: Trip;
@@ -24,6 +27,9 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
   const [viewMode, setViewMode] = useState<'view' | 'edit' | 'map' | 'optimize' | 'insights' | 'ai-analysis'>('view');
   const [selectedMapDay, setSelectedMapDay] = useState(0);
   const [currentTrip, setCurrentTrip] = useState(trip);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const { user } = useAuth();
+  const { showSuccess } = useToast();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -64,6 +70,15 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
     dayPlan.estimatedTravelTime = travelTime;
     
     handleTripUpdate(updatedTrip);
+  };
+
+  const handleShareTrip = () => {
+    // Update trip to be public
+    const updatedTrip = { ...currentTrip, isPublic: true };
+    handleTripUpdate(updatedTrip);
+    
+    // Open share modal
+    setShowShareModal(true);
   };
 
   if (viewMode === 'edit') {
@@ -108,6 +123,12 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
                     <span className="text-xs font-semibold text-purple-700">AI Enhanced</span>
                   </div>
                 )}
+                {currentTrip.isPublic && (
+                  <div className="ml-3 px-3 py-1 bg-gradient-to-r from-green-100 to-teal-100 rounded-full flex items-center">
+                    <Globe className="w-4 h-4 text-green-600 mr-1" />
+                    <span className="text-xs font-semibold text-green-700">Public</span>
+                  </div>
+                )}
               </div>
               {currentTrip.description && (
                 <p className="text-gray-600 max-w-2xl leading-relaxed">
@@ -146,6 +167,15 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
                       Save Trip
                     </>
                   )}
+                </button>
+              )}
+              {user && (
+                <button
+                  onClick={handleShareTrip}
+                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-colors font-medium flex items-center"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share Trip
                 </button>
               )}
             </div>
@@ -375,6 +405,14 @@ export function EnhancedItineraryDisplay({ trip, onEdit, onSave, saveLoading = f
             </div>
           ))}
         </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <CreatePost 
+          onClose={() => setShowShareModal(false)} 
+          selectedTrip={currentTrip}
+        />
       )}
     </div>
   );

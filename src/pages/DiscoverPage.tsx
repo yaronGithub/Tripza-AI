@@ -4,6 +4,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useTrips } from '../hooks/useTrips';
 import { Trip } from '../types';
 import { ItineraryDisplay } from '../components/ItineraryDisplay';
+import { useToast } from '../components/NotificationToast';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function DiscoverPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,63 +16,27 @@ export function DiscoverPage() {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
   const { user } = useAuth();
-  const { saveTrip } = useTrips(user?.id);
+  const { saveTrip, fetchPublicTrips } = useTrips(user?.id);
+  const { showSuccess, showError } = useToast();
 
-  // Mock public trips data - in real app, this would come from Supabase
   useEffect(() => {
-    // Simulate loading public trips
-    setTimeout(() => {
-      const mockPublicTrips: Trip[] = [
-        {
-          id: 'public-1',
-          title: 'San Francisco Food & Culture Tour',
-          destination: 'San Francisco, CA',
-          startDate: '2024-07-15',
-          endDate: '2024-07-17',
-          preferences: ['Restaurants & Foodie Spots', 'Art & Culture', 'Historical Sites'],
-          itinerary: [],
-          isPublic: true,
-          userId: 'user-1',
-          createdAt: '2024-01-15T10:00:00Z',
-          updatedAt: '2024-01-15T10:00:00Z',
-          description: 'A perfect 3-day culinary journey through San Francisco\'s best neighborhoods, featuring iconic restaurants, local markets, and cultural landmarks.'
-        },
-        {
-          id: 'public-2',
-          title: 'NYC Museums & Parks Adventure',
-          destination: 'New York, NY',
-          startDate: '2024-08-01',
-          endDate: '2024-08-04',
-          preferences: ['Museums & Galleries', 'Parks & Nature', 'Historical Sites'],
-          itinerary: [],
-          isPublic: true,
-          userId: 'user-2',
-          createdAt: '2024-01-10T14:30:00Z',
-          updatedAt: '2024-01-10T14:30:00Z',
-          description: 'Explore the best of NYC\'s cultural scene with world-class museums, beautiful parks, and iconic landmarks.'
-        },
-        {
-          id: 'public-3',
-          title: 'Golden Gate to Alcatraz',
-          destination: 'San Francisco, CA',
-          startDate: '2024-06-20',
-          endDate: '2024-06-22',
-          preferences: ['Historical Sites', 'Parks & Nature', 'Adventure & Outdoors'],
-          itinerary: [],
-          isPublic: true,
-          userId: 'user-3',
-          createdAt: '2024-01-05T09:15:00Z',
-          updatedAt: '2024-01-05T09:15:00Z',
-          description: 'Experience San Francisco\'s most iconic attractions with optimized routes and insider tips.'
-        }
-      ];
-      setPublicTrips(mockPublicTrips);
-      setLoading(false);
-    }, 1000);
+    loadPublicTrips();
   }, []);
 
+  const loadPublicTrips = async () => {
+    setLoading(true);
+    try {
+      const trips = await fetchPublicTrips(50);
+      setPublicTrips(trips);
+    } catch (error) {
+      console.error('Error loading public trips:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredTrips = publicTrips.filter(trip => {
-    const matchesSearch = trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = trip.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          trip.destination.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          trip.description?.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -80,25 +46,25 @@ export function DiscoverPage() {
 
   const handleCopyTrip = async (trip: Trip) => {
     if (!user) {
-      alert('Please sign in to copy trips');
+      showError('Authentication Required', 'Please sign in to copy trips');
       return;
     }
 
     try {
       const copiedTrip: Trip = {
         ...trip,
-        id: Date.now().toString(),
+        id: `local-${Date.now()}`,
         userId: user.id,
         isPublic: false,
-        title: `${trip.title} (Copy)`,
+        title: `${trip.title || trip.destination} (Copy)`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
       await saveTrip(copiedTrip);
-      alert('Trip copied to your account!');
+      showSuccess('Trip Copied', 'Trip has been copied to your account');
     } catch (error) {
-      alert('Failed to copy trip. Please try again.');
+      showError('Copy Failed', 'Failed to copy trip. Please try again.');
     }
   };
 
@@ -139,8 +105,7 @@ export function DiscoverPage() {
     return (
       <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Discovering amazing trips...</p>
+          <LoadingSpinner size="lg" color="blue" text="Discovering amazing trips..." />
         </div>
       </div>
     );
@@ -236,7 +201,7 @@ export function DiscoverPage() {
                   <div className="absolute inset-0 bg-black/20"></div>
                   <div className="absolute bottom-4 left-4 right-4">
                     <h3 className="text-xl font-bold text-white mb-1 line-clamp-2">
-                      {trip.title}
+                      {trip.title || trip.destination}
                     </h3>
                     <p className="text-blue-100 flex items-center">
                       <MapPin className="w-4 h-4 mr-1" />
@@ -272,7 +237,7 @@ export function DiscoverPage() {
                   </div>
 
                   <p className="text-gray-700 text-sm mb-4 line-clamp-3">
-                    {trip.description}
+                    {trip.description || `A trip to explore ${trip.destination}`}
                   </p>
 
                   {/* Preferences */}

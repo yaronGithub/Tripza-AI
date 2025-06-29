@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, MapPin, Smile, X, Image as ImageIcon, Calendar, Users } from 'lucide-react';
+import { Camera, MapPin, Smile, X, Image as ImageIcon, Calendar, Users, Eye } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrips } from '../hooks/useTrips';
 import { useSocial } from '../hooks/useSocial';
 import { Trip } from '../types';
+import { useToast } from './NotificationToast';
 
 interface CreatePostProps {
   onClose: () => void;
@@ -19,6 +20,20 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
   const { user } = useAuth();
   const { trips } = useTrips(user?.id);
   const { createPost } = useSocial();
+  const { showSuccess, showError } = useToast();
+
+  useEffect(() => {
+    if (selectedTrip) {
+      setTrip(selectedTrip);
+      // Generate a suggested caption based on the trip
+      const suggestedCaption = `Just planned an amazing trip to ${selectedTrip.destination}! ${
+        selectedTrip.preferences.length > 0 
+          ? `Can't wait to explore the ${selectedTrip.preferences.slice(0, 2).join(' and ')}!` 
+          : ''
+      } #TripzaAI #Travel`;
+      setCaption(suggestedCaption);
+    }
+  }, [selectedTrip]);
 
   const handlePost = async () => {
     if (!caption.trim()) return;
@@ -27,20 +42,47 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
     
     try {
       await createPost(caption, trip?.id || null, selectedImages);
+      showSuccess('Post Created', 'Your trip has been shared successfully!');
       onClose();
     } catch (error) {
       console.error('Error creating post:', error);
+      showError('Post Failed', 'There was an error sharing your trip. Please try again.');
     } finally {
       setIsPosting(false);
     }
   };
 
   const addSampleImages = () => {
-    const sampleImages = [
-      'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=800&q=80',
-      'https://images.unsplash.com/photo-1549144511-f099e773c147?w=800&q=80',
-      'https://images.unsplash.com/photo-1520637836862-4d197d17c93a?w=800&q=80'
+    // Use destination-specific images if available
+    let sampleImages = [
+      'https://images.pexels.com/photos/1796715/pexels-photo-1796715.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/3889843/pexels-photo-3889843.jpeg?auto=compress&cs=tinysrgb&w=800'
     ];
+    
+    if (trip) {
+      const destination = trip.destination.toLowerCase();
+      if (destination.includes('paris')) {
+        sampleImages = [
+          'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'https://images.pexels.com/photos/1850619/pexels-photo-1850619.jpeg?auto=compress&cs=tinysrgb&w=800'
+        ];
+      } else if (destination.includes('tokyo')) {
+        sampleImages = [
+          'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'https://images.pexels.com/photos/2614818/pexels-photo-2614818.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=800'
+        ];
+      } else if (destination.includes('new york')) {
+        sampleImages = [
+          'https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800'
+        ];
+      }
+    }
+    
     setSelectedImages(sampleImages);
   };
 
@@ -102,7 +144,7 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="font-medium text-gray-900">{tripOption.title}</div>
+                  <div className="font-medium text-gray-900">{tripOption.title || `Trip to ${tripOption.destination}`}</div>
                   <div className="text-sm text-gray-600 flex items-center mt-1">
                     <MapPin className="w-3 h-3 mr-1" />
                     <span>{tripOption.destination}</span>
@@ -206,9 +248,16 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
             <button
               onClick={handlePost}
               disabled={!caption.trim() || isPosting}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              {isPosting ? 'Posting...' : 'Share Trip'}
+              {isPosting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Posting...
+                </>
+              ) : (
+                'Share Trip'
+              )}
             </button>
           </div>
         </div>
