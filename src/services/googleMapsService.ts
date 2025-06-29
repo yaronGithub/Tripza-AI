@@ -1,54 +1,77 @@
+import { Loader } from '@googlemaps/js-api-loader';
+
 class GoogleMapsService {
   private apiKey: string | undefined;
   private placesService: google.maps.places.PlacesService | null = null;
   private map: google.maps.Map | null = null;
   private initialized: boolean = false;
-  private initializationFailed: boolean = false;
+  private initializationPromise: Promise<void> | null = null;
+  private loader: Loader | null = null;
 
   constructor() {
     this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (this.apiKey) {
+      this.initializeLoader();
+    }
+  }
+
+  private initializeLoader() {
+    this.loader = new Loader({
+      apiKey: this.apiKey!,
+      version: 'weekly',
+      libraries: ['places', 'geometry']
+    });
   }
 
   // Check if Google Maps is available
   isAvailable(): boolean {
-    return !!(this.apiKey && typeof google !== 'undefined' && google.maps);
+    return !!this.apiKey;
   }
 
   // Initialize Google Maps services
   async initialize(): Promise<void> {
-    if (this.initialized || this.initializationFailed) {
+    if (this.initialized) {
       return;
+    }
+
+    if (this.initializationPromise) {
+      return this.initializationPromise;
     }
 
     if (!this.apiKey) {
       console.warn('Google Maps API key not found. Google Maps features will be disabled.');
-      this.initializationFailed = true;
-      return;
+      return Promise.reject(new Error('Google Maps API key not found'));
     }
 
-    if (typeof google === 'undefined' || !google.maps) {
-      console.warn('Google Maps JavaScript API not loaded. Google Maps features will be disabled.');
-      this.initializationFailed = true;
-      return;
-    }
+    this.initializationPromise = new Promise(async (resolve, reject) => {
+      try {
+        if (!this.loader) {
+          this.initializeLoader();
+        }
 
-    try {
-      // Create a hidden map element for Places service
-      const mapElement = document.createElement('div');
-      mapElement.style.display = 'none';
-      document.body.appendChild(mapElement);
+        // Load Google Maps API
+        await this.loader!.load();
 
-      this.map = new google.maps.Map(mapElement, {
-        center: { lat: 0, lng: 0 },
-        zoom: 1
-      });
+        // Create a hidden map element for Places service
+        const mapElement = document.createElement('div');
+        mapElement.style.display = 'none';
+        document.body.appendChild(mapElement);
 
-      this.placesService = new google.maps.places.PlacesService(this.map);
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize Google Maps services:', error);
-      this.initializationFailed = true;
-    }
+        this.map = new google.maps.Map(mapElement, {
+          center: { lat: 0, lng: 0 },
+          zoom: 1
+        });
+
+        this.placesService = new google.maps.places.PlacesService(this.map);
+        this.initialized = true;
+        resolve();
+      } catch (error) {
+        console.error('Failed to initialize Google Maps services:', error);
+        reject(error);
+      }
+    });
+
+    return this.initializationPromise;
   }
 
   // Search for places using Google Places API
@@ -57,7 +80,7 @@ class GoogleMapsService {
       throw new Error('Google Maps API not available');
     }
 
-    if (!this.placesService && !this.initializationFailed) {
+    if (!this.initialized) {
       await this.initialize();
     }
     
@@ -83,12 +106,12 @@ class GoogleMapsService {
   }
 
   // Get detailed place information including photos
-  async getPlaceDetails(placeId: string): Promise<google.maps.places.PlaceResult | null> {
+  async getPlaceDetails(placeId: string): Promise<google.maps.places.PlaceResult> {
     if (!this.isAvailable()) {
       throw new Error('Google Maps API not available');
     }
 
-    if (!this.placesService && !this.initializationFailed) {
+    if (!this.initialized) {
       await this.initialize();
     }
     
@@ -133,7 +156,7 @@ class GoogleMapsService {
 
   // Get multiple photos for a place
   getPlacePhotos(place: google.maps.places.PlaceResult, maxPhotos: number = 5): string[] {
-    if (!place.photos) return [];
+    if (!place.photos || place.photos.length === 0) return [];
     
     return place.photos
       .slice(0, maxPhotos)
@@ -150,7 +173,7 @@ class GoogleMapsService {
       throw new Error('Google Maps API not available');
     }
 
-    if (!this.placesService && !this.initializationFailed) {
+    if (!this.initialized) {
       await this.initialize();
     }
     
@@ -191,7 +214,7 @@ class GoogleMapsService {
 
   // Convert Google Place to our Attraction format
   async convertPlaceToAttraction(place: google.maps.places.PlaceResult, type: string): Promise<any> {
-    const photos = this.getPlacePhotos(place, 3);
+    const photos = place.photos ? this.getPlacePhotos(place, 3) : [];
     
     return {
       id: place.place_id || `google-${Date.now()}`,

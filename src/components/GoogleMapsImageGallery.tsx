@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Loader2, MapPin } from 'lucide-react';
 import { googleMapsService } from '../services/googleMapsService';
+import { imageService } from '../services/imageService';
 
 interface GoogleMapsImageGalleryProps {
   attractionName: string;
@@ -25,7 +26,7 @@ export function GoogleMapsImageGallery({
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    loadGoogleImages();
+    loadImages();
   }, [attractionName, city, placeId]);
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export function GoogleMapsImageGallery({
     }
   }, [autoSlide, images.length]);
 
-  const loadGoogleImages = async () => {
+  const loadImages = async () => {
     try {
       setLoading(true);
       setError(false);
@@ -45,6 +46,13 @@ export function GoogleMapsImageGallery({
       // Check if Google Maps is available
       if (!googleMapsService.isAvailable()) {
         console.warn('Google Maps not available for image loading');
+        // Fall back to image service instead of showing error
+        const fallbackImages = await imageService.getImageGallery(attractionName, city, 'attraction', 3);
+        if (fallbackImages.length > 0) {
+          setImages(fallbackImages);
+          setLoading(false);
+          return;
+        }
         setError(true);
         setLoading(false);
         return;
@@ -87,11 +95,27 @@ export function GoogleMapsImageGallery({
       if (photos.length > 0) {
         setImages(photos);
       } else {
-        setError(true);
+        // Fall back to image service if Google Maps photos are not available
+        const fallbackImages = await imageService.getImageGallery(attractionName, city, 'attraction', 3);
+        if (fallbackImages.length > 0) {
+          setImages(fallbackImages);
+        } else {
+          setError(true);
+        }
       }
     } catch (err) {
-      console.error('Error loading Google Maps images:', err);
-      setError(true);
+      console.error('Error loading images:', err);
+      // Try fallback images from image service
+      try {
+        const fallbackImages = await imageService.getImageGallery(attractionName, city, 'attraction', 3);
+        if (fallbackImages.length > 0) {
+          setImages(fallbackImages);
+        } else {
+          setError(true);
+        }
+      } catch (fallbackErr) {
+        setError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -111,7 +135,7 @@ export function GoogleMapsImageGallery({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-2" />
-            <p className="text-xs text-gray-600">Loading Google Maps photos...</p>
+            <p className="text-xs text-gray-600">Loading photos...</p>
           </div>
         </div>
       </div>
@@ -124,7 +148,7 @@ export function GoogleMapsImageGallery({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white">
             <MapPin className="w-8 h-8 mx-auto mb-2 opacity-70" />
-            <p className="text-xs opacity-90">Google Maps photos unavailable</p>
+            <p className="text-xs opacity-90">No photos available</p>
           </div>
         </div>
       </div>
