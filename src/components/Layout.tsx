@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Map, User, PlusCircle, Heart, LogOut, Compass, Sparkles, Zap } from 'lucide-react';
+import { Map, User, PlusCircle, Heart, LogOut, Compass, Sparkles, Zap, Users, TrendingUp } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { AuthModal } from './AuthModal';
 
@@ -66,7 +66,7 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
                 <span className="text-2xl font-bold gradient-text neon-glow">
                   Tripza AI
                 </span>
-                <div className="text-xs text-purple-600 font-semibold">Smart Travel</div>
+                <div className="text-xs text-purple-600 font-semibold">Smart Travel Social</div>
               </div>
             </div>
 
@@ -81,6 +81,17 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
                 onClick={() => handleNavigation('home')}
               >
                 Home
+              </button>
+              <button 
+                className={`text-sm font-semibold transition-all duration-300 px-4 py-2 rounded-xl hover-lift ${
+                  currentPage === 'social' 
+                    ? 'text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg' 
+                    : 'text-gray-700 hover:text-purple-600 hover:bg-white/50'
+                }`}
+                onClick={() => handleNavigation('social')}
+              >
+                <TrendingUp className="w-4 h-4 inline mr-2" />
+                Social Feed
               </button>
               <button 
                 className={`text-sm font-semibold transition-all duration-300 px-4 py-2 rounded-xl hover-lift ${
@@ -130,7 +141,7 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
                     <div className="text-sm font-semibold text-gray-900">
                       {user.user_metadata?.name || user.email?.split('@')[0]}
                     </div>
-                    <div className="text-xs text-purple-600 font-medium">Premium User</div>
+                    <div className="text-xs text-purple-600 font-medium">Travel Explorer</div>
                   </div>
                   <div className="relative">
                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-lg hover-lift">
@@ -173,6 +184,17 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
               >
                 <Heart className="w-5 h-5 mb-1" />
                 Home
+              </button>
+              <button 
+                className={`flex flex-col items-center py-2 text-xs font-medium transition-all duration-300 ${
+                  currentPage === 'social' 
+                    ? 'text-purple-600' 
+                    : 'text-gray-600'
+                }`}
+                onClick={() => handleNavigation('social')}
+              >
+                <Users className="w-5 h-5 mb-1" />
+                Social
               </button>
               <button 
                 className={`flex flex-col items-center py-2 text-xs font-medium transition-all duration-300 ${
@@ -245,7 +267,7 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
                 <span className="text-3xl font-bold gradient-text-tertiary">Tripza AI</span>
               </div>
               <p className="text-gray-300 mb-6 max-w-md leading-relaxed">
-                The world's most advanced AI-powered trip planning platform. Create perfect itineraries in seconds with real-time data and intelligent optimization.
+                The world's first AI-powered social travel platform. Plan perfect trips, share amazing experiences, and connect with fellow travelers worldwide.
               </p>
               <div className="flex space-x-4">
                 <div className="w-10 h-10 glass rounded-xl flex items-center justify-center hover-lift cursor-pointer">
@@ -265,10 +287,10 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
               <h3 className="text-lg font-bold mb-4 gradient-text-secondary">Features</h3>
               <ul className="space-y-3 text-gray-300">
                 <li className="hover:text-white transition-colors cursor-pointer hover-lift">AI Trip Planning</li>
+                <li className="hover:text-white transition-colors cursor-pointer hover-lift">Social Travel Feed</li>
                 <li className="hover:text-white transition-colors cursor-pointer hover-lift">Google Maps Integration</li>
-                <li className="hover:text-white transition-colors cursor-pointer hover-lift">Route Optimization</li>
-                <li className="hover:text-white transition-colors cursor-pointer hover-lift">Real-time Directions</li>
-                <li className="hover:text-white transition-colors cursor-pointer hover-lift">Global Coverage</li>
+                <li className="hover:text-white transition-colors cursor-pointer hover-lift">Trip Sharing</li>
+                <li className="hover:text-white transition-colors cursor-pointer hover-lift">Travel Community</li>
               </ul>
             </div>
 
@@ -287,7 +309,7 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
 
           <div className="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2025 Tripza AI. All rights reserved. Powered by AI.
+              © 2025 Tripza AI. All rights reserved. Powered by AI & Community.
             </div>
             <div className="text-gray-400 text-sm">
               Made with ❤️ for travelers worldwide

@@ -4,11 +4,12 @@ import { HomePage } from './pages/HomePage';
 import { CreateTripPage } from './pages/CreateTripPage';
 import { TripsPage } from './pages/TripsPage';
 import { DiscoverPage } from './pages/DiscoverPage';
+import { SocialPage } from './pages/SocialPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './hooks/useAuth';
 import { useToast } from './components/NotificationToast';
 
-type Page = 'home' | 'create' | 'trips' | 'discover' | 'profile';
+type Page = 'home' | 'create' | 'trips' | 'discover' | 'social' | 'profile';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -40,6 +41,8 @@ function App() {
         return <TripsPage />;
       case 'discover':
         return <DiscoverPage />;
+      case 'social':
+        return <SocialPage />;
       case 'profile':
         return (
           <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
