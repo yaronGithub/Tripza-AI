@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { TripPlanningForm } from '../components/TripPlanningForm';
 import { EnhancedItineraryDisplay } from '../components/EnhancedItineraryDisplay';
 import { AuthModal } from '../components/AuthModal';
+import { PremiumFeatureGate } from '../components/PremiumFeatureGate';
 import { TripFormData, Trip } from '../types';
 import { generateItinerary } from '../utils/itinerary';
 import { useAuth } from '../hooks/useAuth';
 import { useTrips } from '../hooks/useTrips';
 import { useAttractions } from '../hooks/useAttractions';
+import { useSubscription } from '../hooks/useSubscription';
 import { useToast } from '../components/NotificationToast';
 import { openaiService } from '../services/openaiService';
 
@@ -20,6 +22,7 @@ export function CreateTripPage() {
   const { user } = useAuth();
   const { saveTrip } = useTrips(user?.id);
   const { searchAttractions } = useAttractions();
+  const { isPro } = useSubscription();
   const { showSuccess, showError, showInfo } = useToast();
 
   const handleFormSubmit = async (formData: TripFormData) => {
@@ -31,10 +34,16 @@ export function CreateTripPage() {
       // Calculate trip duration
       const daysCount = Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 3600 * 24)) + 1;
       
-      // Generate AI-enhanced trip title and description
+      // Check if user needs premium for longer trips
+      if (!isPro() && daysCount > 3) {
+        showError('Premium Feature', 'Trips longer than 3 days require Tripza AI Pro. Please upgrade or select shorter dates.');
+        return;
+      }
+      
+      // Generate AI-enhanced trip title and description (premium feature)
       const [tripTitle, tripDescription, availableAttractions] = await Promise.all([
-        openaiService.optimizeTripTitle(formData.destination, formData.preferences, daysCount),
-        openaiService.generateTripDescription(formData.destination, formData.preferences, daysCount),
+        isPro() ? openaiService.optimizeTripTitle(formData.destination, formData.preferences, daysCount) : Promise.resolve(`${daysCount}-Day ${formData.destination} Adventure`),
+        isPro() ? openaiService.generateTripDescription(formData.destination, formData.preferences, daysCount) : Promise.resolve(`Discover the best of ${formData.destination} on this ${daysCount}-day journey.`),
         searchAttractions(formData.destination, formData.preferences)
       ]);
       
@@ -114,13 +123,26 @@ export function CreateTripPage() {
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       {currentTrip ? (
-        <EnhancedItineraryDisplay
-          trip={currentTrip}
-          onEdit={handleEditTrip}
-          onSave={handleSaveTrip}
-          saveLoading={saveLoading}
-          onTripUpdate={handleTripUpdate}
-        />
+        <PremiumFeatureGate
+          feature="Advanced Trip Editing"
+          fallback={
+            <EnhancedItineraryDisplay
+              trip={currentTrip}
+              onEdit={handleEditTrip}
+              onSave={handleSaveTrip}
+              saveLoading={saveLoading}
+              onTripUpdate={handleTripUpdate}
+            />
+          }
+        >
+          <EnhancedItineraryDisplay
+            trip={currentTrip}
+            onEdit={handleEditTrip}
+            onSave={handleSaveTrip}
+            saveLoading={saveLoading}
+            onTripUpdate={handleTripUpdate}
+          />
+        </PremiumFeatureGate>
       ) : (
         <div>
           {/* Page Header */}

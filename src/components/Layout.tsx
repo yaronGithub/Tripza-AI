@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Map, User, PlusCircle, Heart, LogOut, Compass, Sparkles, Zap } from 'lucide-react';
+import { Map, User, PlusCircle, Heart, LogOut, Compass, Sparkles, Zap, Crown } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useSubscription } from '../hooks/useSubscription';
 import { AuthModal } from './AuthModal';
+import { SubscriptionModal } from './SubscriptionModal';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,8 +13,10 @@ interface LayoutProps {
 
 export function Layout({ children, currentPage = 'home', onNavigate }: LayoutProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const { user, signOut } = useAuth();
+  const { isPro, subscription } = useSubscription();
 
   const handleNavigation = (page: string) => {
     if (onNavigate) {
@@ -116,6 +120,21 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
 
             {/* User Actions */}
             <div className="flex items-center space-x-4">
+              {/* Subscription Status / Upgrade Button */}
+              {user && (
+                <button 
+                  className={`inline-flex items-center px-4 py-2 text-sm font-bold rounded-2xl hover-lift transition-all duration-300 ${
+                    isPro()
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shimmer'
+                  }`}
+                  onClick={() => setShowSubscriptionModal(true)}
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  {isPro() ? 'Pro Member' : 'Upgrade to Pro'}
+                </button>
+              )}
+
               <button 
                 className="btn-premium inline-flex items-center px-6 py-3 text-white text-sm font-bold rounded-2xl hover-lift shimmer"
                 onClick={() => handleNavigation('create')}
@@ -130,13 +149,19 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
                     <div className="text-sm font-semibold text-gray-900">
                       {user.user_metadata?.name || user.email?.split('@')[0]}
                     </div>
-                    <div className="text-xs text-purple-600 font-medium">Premium User</div>
+                    <div className={`text-xs font-medium ${isPro() ? 'text-green-600' : 'text-purple-600'}`}>
+                      {isPro() ? 'Pro User' : 'Free User'}
+                    </div>
                   </div>
                   <div className="relative">
                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-lg hover-lift">
                       {(user.user_metadata?.name || user.email || 'U')[0].toUpperCase()}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+                    {isPro() && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <Crown className="w-2 h-2 text-white" />
+                      </div>
+                    )}
                   </div>
                   <button 
                     className="p-3 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all duration-300 hover-lift"
@@ -301,6 +326,11 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
         onClose={() => setShowAuthModal(false)}
         mode={authMode}
         onModeChange={setAuthMode}
+      />
+
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
       />
     </div>
   );

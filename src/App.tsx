@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { CreateTripPage } from './pages/CreateTripPage';
@@ -6,26 +6,35 @@ import { TripsPage } from './pages/TripsPage';
 import { DiscoverPage } from './pages/DiscoverPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './hooks/useAuth';
+import { useSubscription } from './hooks/useSubscription';
 import { useToast } from './components/NotificationToast';
 
 type Page = 'home' | 'create' | 'trips' | 'discover' | 'profile';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  const { loading } = useAuth();
+  const { loading: authLoading, user } = useAuth();
+  const { initializeRevenueCat } = useSubscription();
   const { ToastContainer } = useToast();
+
+  // Initialize RevenueCat when user changes
+  useEffect(() => {
+    if (!authLoading) {
+      initializeRevenueCat();
+    }
+  }, [authLoading, user, initializeRevenueCat]);
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page as Page);
   };
 
   const renderCurrentPage = () => {
-    if (loading) {
+    if (authLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading TripCraft...</p>
+            <p className="text-gray-600">Loading Tripza AI...</p>
           </div>
         </div>
       );
