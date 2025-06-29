@@ -54,7 +54,7 @@ export function GoogleMapsImageGallery({
           return;
         }
         
-        // If no fallback images, try Pexels
+        // Try Pexels API for additional images if available
         const pexelsImages = await getPexelsImages(attractionName, city);
         if (pexelsImages.length > 0) {
           setImages(pexelsImages);
