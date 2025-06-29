@@ -87,17 +87,10 @@ export function useTrips(userId?: string) {
           const attraction = dayPlan.attractions[j];
           
           // First, ensure attraction exists in database
-          const { data: existingAttraction } = await supabase
-            .from('attractions')
-            .select('id')
-            .eq('name', attraction.name)
-            .eq('latitude', attraction.latitude)
-            .eq('longitude', attraction.longitude)
-            .single();
-
-          let attractionId = existingAttraction?.id;
-
-          if (!attractionId) {
+          let attractionId = attraction.id;
+          
+          // Check if this is a generated ID (not a UUID)
+          if (attraction.id.startsWith('generated-') || attraction.id.startsWith('google-')) {
             // Insert new attraction
             const { data: newAttraction, error: attractionError } = await supabase
               .from('attractions')
@@ -117,6 +110,36 @@ export function useTrips(userId?: string) {
 
             if (attractionError) throw attractionError;
             attractionId = newAttraction.id;
+          } else {
+            // Check if attraction exists
+            const { data: existingAttraction } = await supabase
+              .from('attractions')
+              .select('id')
+              .eq('id', attraction.id)
+              .single();
+              
+            if (!existingAttraction) {
+              // Insert new attraction with the existing ID
+              const { data: newAttraction, error: attractionError } = await supabase
+                .from('attractions')
+                .insert({
+                  id: attraction.id,
+                  name: attraction.name,
+                  type: attraction.type,
+                  description: attraction.description,
+                  latitude: attraction.latitude,
+                  longitude: attraction.longitude,
+                  estimated_duration: attraction.estimatedDuration,
+                  rating: attraction.rating,
+                  address: attraction.address,
+                  image_url: attraction.imageUrl,
+                })
+                .select()
+                .single();
+
+              if (attractionError) throw attractionError;
+              attractionId = newAttraction.id;
+            }
           }
 
           // Link attraction to day plan
@@ -135,6 +158,7 @@ export function useTrips(userId?: string) {
       await fetchTrips(); // Refresh trips list
       return tripData.id;
     } catch (err) {
+      console.error('Error saving trip:', err);
       throw new Error(err instanceof Error ? err.message : 'Failed to save trip');
     }
   };
@@ -180,14 +204,19 @@ async function convertDbTripToTrip(dbTrip: DbTrip): Promise<Trip> {
 
   if (dayPlansError) throw dayPlansError;
 
-  const itinerary: DayPlan[] = dayPlans.map((dayPlan: any) => ({
-    date: dayPlan.date,
-    estimatedTravelTime: dayPlan.estimated_travel_time,
-    totalDuration: dayPlan.total_duration,
-    attractions: dayPlan.day_plan_attractions
+  const itinerary: DayPlan[] = dayPlans.map((dayPlan: any) => {
+    // Sort attractions by order_index
+    const sortedAttractions = [...dayPlan.day_plan_attractions]
       .sort((a: any, b: any) => a.order_index - b.order_index)
-      .map((dpa: any) => convertDbAttractionToAttraction(dpa.attractions)),
-  }));
+      .map((dpa: any) => convertDbAttractionToAttraction(dpa.attractions));
+
+    return {
+      date: dayPlan.date,
+      estimatedTravelTime: dayPlan.estimated_travel_time,
+      totalDuration: dayPlan.total_duration,
+      attractions: sortedAttractions,
+    };
+  });
 
   return {
     id: dbTrip.id,

@@ -98,13 +98,15 @@ export function ItineraryDisplay({ trip, onEdit, onSave, saveLoading = false, on
               )}
             </div>
             <div className="mt-4 sm:mt-0 flex space-x-3">
-              <button
-                onClick={() => setViewMode('edit')}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Trip
-              </button>
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Trip
+                </button>
+              )}
               {onSave && (
                 <button
                   onClick={onSave}
