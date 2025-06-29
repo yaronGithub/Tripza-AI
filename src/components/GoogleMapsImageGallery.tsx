@@ -53,6 +53,15 @@ export function GoogleMapsImageGallery({
           setLoading(false);
           return;
         }
+        
+        // If no fallback images, try Pexels
+        const pexelsImages = await getPexelsImages(attractionName, city);
+        if (pexelsImages.length > 0) {
+          setImages(pexelsImages);
+          setLoading(false);
+          return;
+        }
+        
         setError(true);
         setLoading(false);
         return;
@@ -100,7 +109,13 @@ export function GoogleMapsImageGallery({
         if (fallbackImages.length > 0) {
           setImages(fallbackImages);
         } else {
-          setError(true);
+          // Try Pexels as a last resort
+          const pexelsImages = await getPexelsImages(attractionName, city);
+          if (pexelsImages.length > 0) {
+            setImages(pexelsImages);
+          } else {
+            setError(true);
+          }
         }
       }
     } catch (err) {
@@ -111,13 +126,48 @@ export function GoogleMapsImageGallery({
         if (fallbackImages.length > 0) {
           setImages(fallbackImages);
         } else {
-          setError(true);
+          // Try Pexels as a last resort
+          const pexelsImages = await getPexelsImages(attractionName, city);
+          if (pexelsImages.length > 0) {
+            setImages(pexelsImages);
+          } else {
+            setError(true);
+          }
         }
       } catch (fallbackErr) {
         setError(true);
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getPexelsImages = async (query: string, location: string): Promise<string[]> => {
+    try {
+      // Use Pexels API for high-quality images
+      const searchQuery = `${query} ${location}`;
+      const response = await fetch(
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=3&orientation=landscape`,
+        {
+          headers: {
+            'Authorization': import.meta.env.VITE_PEXELS_API_KEY || ''
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Pexels API error');
+      }
+      
+      const data = await response.json();
+      if (data.photos && data.photos.length > 0) {
+        return data.photos.map((photo: any) => photo.src.large);
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Pexels search error:', error);
+      return [];
     }
   };
 
@@ -172,7 +222,7 @@ export function GoogleMapsImageGallery({
         {/* Google Maps Badge */}
         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-800 flex items-center">
           <MapPin className="w-3 h-3 mr-1 text-blue-600" />
-          Google Maps
+          {googleMapsService.isAvailable() ? 'Google Maps' : 'Pexels'}
         </div>
         
         {/* Image Counter */}

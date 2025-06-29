@@ -3,6 +3,7 @@ import { Clock, Star, MapPin, Eye, Heart, X, Phone, Globe, DollarSign } from 'lu
 import { Attraction } from '../types';
 import { GoogleMapsImageGallery } from './GoogleMapsImageGallery';
 import { enhancedAttractionService } from '../services/enhancedAttractionService';
+import { imageService } from '../services/imageService';
 
 interface AttractionCardProps {
   attraction: Attraction;
@@ -26,6 +27,27 @@ export function AttractionCard({
   const [showModal, setShowModal] = useState(false);
   const [enhancedDetails, setEnhancedDetails] = useState<any>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [attractionImage, setAttractionImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load image if not using gallery and no image is provided
+    if (!showGallery && !attraction.imageUrl) {
+      loadAttractionImage();
+    }
+  }, [attraction, showGallery]);
+
+  const loadAttractionImage = async () => {
+    try {
+      const image = await imageService.getAttractionImage(
+        attraction.name,
+        city,
+        attraction.type
+      );
+      setAttractionImage(image);
+    } catch (error) {
+      console.error('Error loading attraction image:', error);
+    }
+  };
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -61,6 +83,29 @@ export function AttractionCard({
     }
   };
 
+  const getAttractionImage = () => {
+    if (attraction.imageUrl) return attraction.imageUrl;
+    if (attractionImage) return attractionImage;
+    
+    // Fallback images based on attraction type
+    const type = attraction.type.toLowerCase();
+    if (type.includes('park') || type.includes('nature')) {
+      return 'https://images.pexels.com/photos/1179229/pexels-photo-1179229.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (type.includes('museum') || type.includes('gallery')) {
+      return 'https://images.pexels.com/photos/1674049/pexels-photo-1674049.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (type.includes('historical') || type.includes('heritage')) {
+      return 'https://images.pexels.com/photos/1010657/pexels-photo-1010657.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (type.includes('restaurant') || type.includes('food')) {
+      return 'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (type.includes('shopping')) {
+      return 'https://images.pexels.com/photos/1050244/pexels-photo-1050244.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (type.includes('art') || type.includes('culture')) {
+      return 'https://images.pexels.com/photos/1509534/pexels-photo-1509534.jpeg?auto=compress&cs=tinysrgb&w=800';
+    }
+    
+    return 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
+  };
+
   return (
     <>
       <div className={`bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group ${className}`}>
@@ -77,12 +122,12 @@ export function AttractionCard({
           ) : (
             <div className="relative w-full h-full">
               <img
-                src={attraction.imageUrl || attraction.photos?.[0]}
+                src={getAttractionImage()}
                 alt={attraction.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
+                  target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
                 }}
               />
               

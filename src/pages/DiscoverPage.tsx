@@ -6,6 +6,7 @@ import { Trip } from '../types';
 import { ItineraryDisplay } from '../components/ItineraryDisplay';
 import { useToast } from '../components/NotificationToast';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { imageService } from '../services/imageService';
 
 export function DiscoverPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,6 +15,7 @@ export function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [likedTrips, setLikedTrips] = useState<Set<string>>(new Set());
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [tripImages, setTripImages] = useState<Record<string, string>>({});
 
   const { user } = useAuth();
   const { saveTrip, fetchPublicTrips } = useTrips(user?.id);
@@ -28,6 +30,18 @@ export function DiscoverPage() {
     try {
       const trips = await fetchPublicTrips(50);
       setPublicTrips(trips);
+      
+      // Load images for each trip
+      const images: Record<string, string> = {};
+      for (const trip of trips) {
+        try {
+          const image = await imageService.getDestinationHeroImage(trip.destination);
+          images[trip.id] = image;
+        } catch (error) {
+          console.error(`Error loading image for ${trip.destination}:`, error);
+        }
+      }
+      setTripImages(images);
     } catch (error) {
       console.error('Error loading public trips:', error);
     } finally {
@@ -99,6 +113,32 @@ export function DiscoverPage() {
     const end = new Date(endDate);
     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     return `${days} day${days !== 1 ? 's' : ''}`;
+  };
+
+  const getTripImage = (trip: Trip): string => {
+    if (tripImages[trip.id]) {
+      return tripImages[trip.id];
+    }
+    
+    // Fallback images based on destination
+    const destination = trip.destination.toLowerCase();
+    if (destination.includes('paris')) {
+      return 'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (destination.includes('tokyo')) {
+      return 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (destination.includes('new york')) {
+      return 'https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (destination.includes('london')) {
+      return 'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (destination.includes('rome')) {
+      return 'https://images.pexels.com/photos/532263/pexels-photo-532263.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (destination.includes('barcelona')) {
+      return 'https://images.pexels.com/photos/819764/pexels-photo-819764.jpeg?auto=compress&cs=tinysrgb&w=800';
+    } else if (destination.includes('san francisco')) {
+      return 'https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&w=800';
+    }
+    
+    return 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
   };
 
   if (loading) {
@@ -197,7 +237,16 @@ export function DiscoverPage() {
                 className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-200 group"
               >
                 {/* Trip Header */}
-                <div className="h-48 bg-gradient-to-br from-blue-500 via-purple-500 to-orange-500 relative overflow-hidden">
+                <div className="h-48 relative overflow-hidden">
+                  <img 
+                    src={getTripImage(trip)}
+                    alt={trip.destination}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
+                    }}
+                  />
                   <div className="absolute inset-0 bg-black/20"></div>
                   <div className="absolute bottom-4 left-4 right-4">
                     <h3 className="text-xl font-bold text-white mb-1 line-clamp-2">

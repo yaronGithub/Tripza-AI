@@ -5,6 +5,7 @@ import { useTrips } from '../hooks/useTrips';
 import { useSocial } from '../hooks/useSocial';
 import { Trip } from '../types';
 import { useToast } from './NotificationToast';
+import { imageService } from '../services/imageService';
 
 interface CreatePostProps {
   onClose: () => void;
@@ -16,6 +17,7 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [trip, setTrip] = useState<Trip | null>(selectedTrip || null);
   const [isPosting, setIsPosting] = useState(false);
+  const [isLoadingImages, setIsLoadingImages] = useState(false);
   
   const { user } = useAuth();
   const { trips } = useTrips(user?.id);
@@ -32,6 +34,9 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
           : ''
       } #TripzaAI #Travel`;
       setCaption(suggestedCaption);
+      
+      // Load destination images automatically
+      loadDestinationImages(selectedTrip.destination);
     }
   }, [selectedTrip]);
 
@@ -49,6 +54,108 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
       showError('Post Failed', 'There was an error sharing your trip. Please try again.');
     } finally {
       setIsPosting(false);
+    }
+  };
+
+  const loadDestinationImages = async (destination: string) => {
+    setIsLoadingImages(true);
+    
+    try {
+      // Get destination-specific images
+      let images: string[] = [];
+      
+      // Try to get a hero image first
+      const heroImage = await imageService.getDestinationHeroImage(destination);
+      images.push(heroImage);
+      
+      // Try to get additional images based on preferences
+      if (trip && trip.preferences.length > 0) {
+        for (const preference of trip.preferences.slice(0, 2)) {
+          try {
+            const image = await imageService.getAttractionImage(
+              `${destination} ${preference}`, 
+              destination, 
+              preference
+            );
+            if (image && !images.includes(image)) {
+              images.push(image);
+            }
+          } catch (error) {
+            console.error('Error loading preference image:', error);
+          }
+        }
+      }
+      
+      // Ensure we have at least 3 images
+      if (images.length < 3) {
+        // Use destination-specific fallback images
+        const destination = trip?.destination.toLowerCase() || '';
+        let fallbackImages: string[] = [];
+        
+        if (destination.includes('paris')) {
+          fallbackImages = [
+            'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/1850619/pexels-photo-1850619.jpeg?auto=compress&cs=tinysrgb&w=800'
+          ];
+        } else if (destination.includes('tokyo')) {
+          fallbackImages = [
+            'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/2614818/pexels-photo-2614818.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=800'
+          ];
+        } else if (destination.includes('new york')) {
+          fallbackImages = [
+            'https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800'
+          ];
+        } else if (destination.includes('london')) {
+          fallbackImages = [
+            'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/672532/pexels-photo-672532.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/726484/pexels-photo-726484.jpeg?auto=compress&cs=tinysrgb&w=800'
+          ];
+        } else if (destination.includes('rome')) {
+          fallbackImages = [
+            'https://images.pexels.com/photos/532263/pexels-photo-532263.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/2064827/pexels-photo-2064827.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/2225442/pexels-photo-2225442.jpeg?auto=compress&cs=tinysrgb&w=800'
+          ];
+        } else if (destination.includes('barcelona')) {
+          fallbackImages = [
+            'https://images.pexels.com/photos/819764/pexels-photo-819764.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/2225442/pexels-photo-2225442.jpeg?auto=compress&cs=tinysrgb&w=800'
+          ];
+        } else if (destination.includes('san francisco')) {
+          fallbackImages = [
+            'https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/1141853/pexels-photo-1141853.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/1834399/pexels-photo-1834399.jpeg?auto=compress&cs=tinysrgb&w=800'
+          ];
+        } else {
+          fallbackImages = [
+            'https://images.pexels.com/photos/1796715/pexels-photo-1796715.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg?auto=compress&cs=tinysrgb&w=800',
+            'https://images.pexels.com/photos/3889843/pexels-photo-3889843.jpeg?auto=compress&cs=tinysrgb&w=800'
+          ];
+        }
+        
+        // Add fallback images that aren't already in our list
+        for (const img of fallbackImages) {
+          if (!images.includes(img) && images.length < 3) {
+            images.push(img);
+          }
+        }
+      }
+      
+      setSelectedImages(images.slice(0, 3));
+    } catch (error) {
+      console.error('Error loading destination images:', error);
+      addSampleImages();
+    } finally {
+      setIsLoadingImages(false);
     }
   };
 
@@ -137,7 +244,19 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
               {trips.map((tripOption) => (
                 <button
                   key={tripOption.id}
-                  onClick={() => setTrip(tripOption)}
+                  onClick={() => {
+                    setTrip(tripOption);
+                    // Generate a suggested caption
+                    const suggestedCaption = `Just planned an amazing trip to ${tripOption.destination}! ${
+                      tripOption.preferences.length > 0 
+                        ? `Can't wait to explore the ${tripOption.preferences.slice(0, 2).join(' and ')}!` 
+                        : ''
+                    } #TripzaAI #Travel`;
+                    setCaption(suggestedCaption);
+                    
+                    // Load destination images
+                    loadDestinationImages(tripOption.destination);
+                  }}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                     trip?.id === tripOption.id
                       ? 'border-blue-500 bg-blue-50'
@@ -181,7 +300,12 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
               Add photos
             </label>
             
-            {selectedImages.length > 0 ? (
+            {isLoadingImages ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading destination images...</p>
+              </div>
+            ) : selectedImages.length > 0 ? (
               <div className="grid grid-cols-3 gap-3 mb-4">
                 {selectedImages.map((image, index) => (
                   <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
@@ -189,6 +313,10 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
                       src={image}
                       alt={`Selected ${index + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
+                      }}
                     />
                     <button
                       onClick={() => setSelectedImages(selectedImages.filter((_, i) => i !== index))}

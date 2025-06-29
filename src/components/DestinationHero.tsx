@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Calendar, Users } from 'lucide-react';
 import { imageService } from '../services/imageService';
+import { googleMapsService } from '../services/googleMapsService';
 
 interface DestinationHeroProps {
   destination: string;
@@ -27,10 +28,52 @@ export function DestinationHero({
   const loadHeroImage = async () => {
     try {
       setLoading(true);
+      
+      // Try to get image from Google Maps first if available
+      if (googleMapsService.isAvailable()) {
+        try {
+          await googleMapsService.initialize();
+          const places = await googleMapsService.searchPlaces(`${destination} skyline landmark`);
+          
+          if (places && places.length > 0 && places[0].photos && places[0].photos.length > 0) {
+            const photoUrl = googleMapsService.getPlacePhotoUrl(places[0].photos[0], 1200);
+            setHeroImage(photoUrl);
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.warn('Error loading Google Maps image:', error);
+          // Continue to fallback methods
+        }
+      }
+      
+      // Try to get a destination image from our image service
       const imageUrl = await imageService.getDestinationHeroImage(destination);
       setHeroImage(imageUrl);
     } catch (error) {
       console.error('Error loading hero image:', error);
+      // Use a fallback image based on destination
+      const fallbackImages = {
+        'paris': 'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'tokyo': 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'new york': 'https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'london': 'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'rome': 'https://images.pexels.com/photos/532263/pexels-photo-532263.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'barcelona': 'https://images.pexels.com/photos/819764/pexels-photo-819764.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'san francisco': 'https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&w=1200'
+      };
+      
+      const destinationLower = destination.toLowerCase();
+      let matchedImage = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=1200';
+      
+      for (const [key, url] of Object.entries(fallbackImages)) {
+        if (destinationLower.includes(key)) {
+          matchedImage = url;
+          break;
+        }
+      }
+      
+      setHeroImage(matchedImage);
     } finally {
       setLoading(false);
     }
@@ -64,7 +107,7 @@ export function DestinationHero({
             className="w-full h-full object-cover"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80';
+              target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=1200';
             }}
           />
         )}

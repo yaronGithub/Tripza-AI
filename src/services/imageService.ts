@@ -7,102 +7,126 @@ export class ImageService {
   private curatedImages: Record<string, Record<string, string[]>> = {
     'san francisco': {
       'Parks & Nature': [
-        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Golden Gate Bridge
-        'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=80', // Golden Gate Park
-        'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&q=80', // Crissy Field
+        'https://images.pexels.com/photos/1141853/pexels-photo-1141853.jpeg?auto=compress&cs=tinysrgb&w=800', // Golden Gate Bridge
+        'https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&w=800', // Golden Gate Park
+        'https://images.pexels.com/photos/1834399/pexels-photo-1834399.jpeg?auto=compress&cs=tinysrgb&w=800', // Crissy Field
       ],
       'Museums & Galleries': [
-        'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', // SFMOMA
-        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80', // De Young Museum
-        'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80', // Legion of Honor
+        'https://images.pexels.com/photos/1674049/pexels-photo-1674049.jpeg?auto=compress&cs=tinysrgb&w=800', // SFMOMA
+        'https://images.pexels.com/photos/2123337/pexels-photo-2123337.jpeg?auto=compress&cs=tinysrgb&w=800', // De Young Museum
+        'https://images.pexels.com/photos/2570059/pexels-photo-2570059.jpeg?auto=compress&cs=tinysrgb&w=800', // Legion of Honor
       ],
       'Historical Sites': [
-        'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&q=80', // Alcatraz
-        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Golden Gate
-        'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=80', // Lombard Street
+        'https://images.pexels.com/photos/64271/queen-of-liberty-statue-of-liberty-new-york-liberty-statue-64271.jpeg?auto=compress&cs=tinysrgb&w=800', // Alcatraz
+        'https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&w=800', // Golden Gate
+        'https://images.pexels.com/photos/2263436/pexels-photo-2263436.jpeg?auto=compress&cs=tinysrgb&w=800', // Lombard Street
       ],
       'Restaurants & Foodie Spots': [
-        'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80', // Fisherman's Wharf
-        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80', // Restaurant interior
-        'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&q=80', // Food market
+        'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800', // Fisherman's Wharf
+        'https://images.pexels.com/photos/262978/pexels-photo-262978.jpeg?auto=compress&cs=tinysrgb&w=800', // Restaurant interior
+        'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=800', // Food market
       ],
       'Art & Culture': [
-        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80', // Chinatown
-        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Cultural district
-        'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80', // Arts district
+        'https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=800', // Chinatown
+        'https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&w=800', // Cultural district
+        'https://images.pexels.com/photos/2570059/pexels-photo-2570059.jpeg?auto=compress&cs=tinysrgb&w=800', // Arts district
       ]
     },
     'new york': {
       'Parks & Nature': [
-        'https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?w=800&q=80', // Central Park
-        'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80', // Central Park aerial
-        'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80', // High Line
+        'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800', // Central Park
+        'https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=800', // Central Park aerial
+        'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg?auto=compress&cs=tinysrgb&w=800', // High Line
       ],
       'Museums & Galleries': [
-        'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', // MoMA
-        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80', // Met Museum
-        'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80', // Guggenheim
+        'https://images.pexels.com/photos/1674049/pexels-photo-1674049.jpeg?auto=compress&cs=tinysrgb&w=800', // MoMA
+        'https://images.pexels.com/photos/2123337/pexels-photo-2123337.jpeg?auto=compress&cs=tinysrgb&w=800', // Met Museum
+        'https://images.pexels.com/photos/2570059/pexels-photo-2570059.jpeg?auto=compress&cs=tinysrgb&w=800', // Guggenheim
       ],
       'Historical Sites': [
-        'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=800&q=80', // Statue of Liberty
-        'https://images.unsplash.com/photo-1546436836-07a91091f160?w=800&q=80', // Brooklyn Bridge
-        'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80', // 9/11 Memorial
+        'https://images.pexels.com/photos/64271/queen-of-liberty-statue-of-liberty-new-york-liberty-statue-64271.jpeg?auto=compress&cs=tinysrgb&w=800', // Statue of Liberty
+        'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg?auto=compress&cs=tinysrgb&w=800', // Brooklyn Bridge
+        'https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=800', // 9/11 Memorial
       ],
       'Nightlife': [
-        'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80', // Times Square
-        'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80', // Broadway
-        'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=800&q=80', // NYC nightlife
+        'https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=800', // Times Square
+        'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg?auto=compress&cs=tinysrgb&w=800', // Broadway
+        'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800', // NYC nightlife
       ]
     },
     'paris': {
       'Historical Sites': [
-        'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=800&q=80', // Eiffel Tower
-        'https://images.unsplash.com/photo-1549144511-f099e773c147?w=800&q=80', // Louvre
-        'https://images.unsplash.com/photo-1520637836862-4d197d17c93a?w=800&q=80', // Notre Dame
+        'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=800', // Eiffel Tower
+        'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=800', // Louvre
+        'https://images.pexels.com/photos/1850619/pexels-photo-1850619.jpeg?auto=compress&cs=tinysrgb&w=800', // Notre Dame
       ],
       'Museums & Galleries': [
-        'https://images.unsplash.com/photo-1549144511-f099e773c147?w=800&q=80', // Louvre
-        'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', // Musée d'Orsay
-        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80', // Centre Pompidou
+        'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=800', // Louvre
+        'https://images.pexels.com/photos/1674049/pexels-photo-1674049.jpeg?auto=compress&cs=tinysrgb&w=800', // Musée d'Orsay
+        'https://images.pexels.com/photos/2123337/pexels-photo-2123337.jpeg?auto=compress&cs=tinysrgb&w=800', // Centre Pompidou
       ],
       'Parks & Nature': [
-        'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=800&q=80', // Trocadéro Gardens
-        'https://images.unsplash.com/photo-1520637836862-4d197d17c93a?w=800&q=80', // Luxembourg Gardens
-        'https://images.unsplash.com/photo-1549144511-f099e773c147?w=800&q=80', // Tuileries
+        'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=800', // Trocadéro Gardens
+        'https://images.pexels.com/photos/1850619/pexels-photo-1850619.jpeg?auto=compress&cs=tinysrgb&w=800', // Luxembourg Gardens
+        'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=800', // Tuileries
       ]
     },
     'london': {
       'Historical Sites': [
-        'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80', // Big Ben
-        'https://images.unsplash.com/photo-1520986606214-8b456906c813?w=800&q=80', // Tower Bridge
-        'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?w=800&q=80', // Westminster
+        'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&w=800', // Big Ben
+        'https://images.pexels.com/photos/672532/pexels-photo-672532.jpeg?auto=compress&cs=tinysrgb&w=800', // Tower Bridge
+        'https://images.pexels.com/photos/726484/pexels-photo-726484.jpeg?auto=compress&cs=tinysrgb&w=800', // Westminster
       ],
       'Museums & Galleries': [
-        'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', // British Museum
-        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80', // Tate Modern
-        'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80', // National Gallery
+        'https://images.pexels.com/photos/1674049/pexels-photo-1674049.jpeg?auto=compress&cs=tinysrgb&w=800', // British Museum
+        'https://images.pexels.com/photos/2123337/pexels-photo-2123337.jpeg?auto=compress&cs=tinysrgb&w=800', // Tate Modern
+        'https://images.pexels.com/photos/2570059/pexels-photo-2570059.jpeg?auto=compress&cs=tinysrgb&w=800', // National Gallery
       ],
       'Parks & Nature': [
-        'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80', // Hyde Park
-        'https://images.unsplash.com/photo-1520986606214-8b456906c813?w=800&q=80', // Regent's Park
-        'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?w=800&q=80', // Greenwich Park
+        'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&w=800', // Hyde Park
+        'https://images.pexels.com/photos/672532/pexels-photo-672532.jpeg?auto=compress&cs=tinysrgb&w=800', // Regent's Park
+        'https://images.pexels.com/photos/726484/pexels-photo-726484.jpeg?auto=compress&cs=tinysrgb&w=800', // Greenwich Park
       ]
     },
     'tokyo': {
       'Historical Sites': [
-        'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80', // Senso-ji Temple
-        'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=800&q=80', // Meiji Shrine
-        'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&q=80', // Imperial Palace
+        'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=800', // Senso-ji Temple
+        'https://images.pexels.com/photos/2614818/pexels-photo-2614818.jpeg?auto=compress&cs=tinysrgb&w=800', // Meiji Shrine
+        'https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=800', // Imperial Palace
       ],
       'Art & Culture': [
-        'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80', // Traditional culture
-        'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=800&q=80', // Modern Tokyo
-        'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&q=80', // Shibuya
+        'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=800', // Traditional culture
+        'https://images.pexels.com/photos/2614818/pexels-photo-2614818.jpeg?auto=compress&cs=tinysrgb&w=800', // Modern Tokyo
+        'https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=800', // Shibuya
       ],
       'Parks & Nature': [
-        'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80', // Cherry blossoms
-        'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=800&q=80', // Ueno Park
-        'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&q=80', // Shinjuku Gyoen
+        'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=800', // Cherry blossoms
+        'https://images.pexels.com/photos/2614818/pexels-photo-2614818.jpeg?auto=compress&cs=tinysrgb&w=800', // Ueno Park
+        'https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=800', // Shinjuku Gyoen
+      ]
+    },
+    'rome': {
+      'Historical Sites': [
+        'https://images.pexels.com/photos/532263/pexels-photo-532263.jpeg?auto=compress&cs=tinysrgb&w=800', // Colosseum
+        'https://images.pexels.com/photos/2064827/pexels-photo-2064827.jpeg?auto=compress&cs=tinysrgb&w=800', // Roman Forum
+        'https://images.pexels.com/photos/2225442/pexels-photo-2225442.jpeg?auto=compress&cs=tinysrgb&w=800', // Pantheon
+      ],
+      'Art & Culture': [
+        'https://images.pexels.com/photos/532263/pexels-photo-532263.jpeg?auto=compress&cs=tinysrgb&w=800', // Vatican Museums
+        'https://images.pexels.com/photos/2064827/pexels-photo-2064827.jpeg?auto=compress&cs=tinysrgb&w=800', // Sistine Chapel
+        'https://images.pexels.com/photos/2225442/pexels-photo-2225442.jpeg?auto=compress&cs=tinysrgb&w=800', // Galleria Borghese
+      ]
+    },
+    'barcelona': {
+      'Historical Sites': [
+        'https://images.pexels.com/photos/819764/pexels-photo-819764.jpeg?auto=compress&cs=tinysrgb&w=800', // Sagrada Familia
+        'https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg?auto=compress&cs=tinysrgb&w=800', // Park Güell
+        'https://images.pexels.com/photos/2225442/pexels-photo-2225442.jpeg?auto=compress&cs=tinysrgb&w=800', // Casa Batlló
+      ],
+      'Art & Culture': [
+        'https://images.pexels.com/photos/819764/pexels-photo-819764.jpeg?auto=compress&cs=tinysrgb&w=800', // Picasso Museum
+        'https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg?auto=compress&cs=tinysrgb&w=800', // MACBA
+        'https://images.pexels.com/photos/2225442/pexels-photo-2225442.jpeg?auto=compress&cs=tinysrgb&w=800', // Joan Miró Foundation
       ]
     }
   };
@@ -110,67 +134,67 @@ export class ImageService {
   // Fallback images by category
   private categoryImages: Record<string, string[]> = {
     'Parks & Nature': [
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80',
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-      'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=80',
-      'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&q=80',
-      'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80'
+      'https://images.pexels.com/photos/1179229/pexels-photo-1179229.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1770809/pexels-photo-1770809.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1834399/pexels-photo-1834399.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     'Museums & Galleries': [
-      'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80',
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80',
-      'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80',
-      'https://images.unsplash.com/photo-1549144511-f099e773c147?w=800&q=80',
-      'https://images.unsplash.com/photo-1520637836862-4d197d17c93a?w=800&q=80'
+      'https://images.pexels.com/photos/1674049/pexels-photo-1674049.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2123337/pexels-photo-2123337.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2570059/pexels-photo-2570059.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1509534/pexels-photo-1509534.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     'Historical Sites': [
-      'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&q=80',
-      'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=800&q=80',
-      'https://images.unsplash.com/photo-1546436836-07a91091f160?w=800&q=80',
-      'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80',
-      'https://images.unsplash.com/photo-1520986606214-8b456906c813?w=800&q=80'
+      'https://images.pexels.com/photos/1010657/pexels-photo-1010657.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/532263/pexels-photo-532263.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2064827/pexels-photo-2064827.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2225442/pexels-photo-2225442.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2263436/pexels-photo-2263436.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     'Shopping Districts': [
-      'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80',
-      'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&q=80',
-      'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=800&q=80',
-      'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&q=80',
-      'https://images.unsplash.com/photo-1519201945132-7b9e46fa1db4?w=800&q=80'
+      'https://images.pexels.com/photos/1050244/pexels-photo-1050244.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1884582/pexels-photo-1884582.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1884583/pexels-photo-1884583.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     'Restaurants & Foodie Spots': [
-      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80',
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80',
-      'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&q=80',
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
-      'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80'
+      'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/262978/pexels-photo-262978.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/941861/pexels-photo-941861.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     'Nightlife': [
-      'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80',
-      'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80',
-      'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
-      'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80',
-      'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80'
+      'https://images.pexels.com/photos/1190298/pexels-photo-1190298.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1540406/pexels-photo-1540406.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/801863/pexels-photo-801863.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1684187/pexels-photo-1684187.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1540319/pexels-photo-1540319.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     'Family-Friendly': [
-      'https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?w=800&q=80',
-      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80',
-      'https://images.unsplash.com/photo-1520637736862-4d197d17c93a?w=800&q=80',
-      'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80',
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80'
+      'https://images.pexels.com/photos/1834399/pexels-photo-1834399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1179229/pexels-photo-1179229.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1770809/pexels-photo-1770809.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     'Adventure & Outdoors': [
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80',
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-      'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=80',
-      'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80',
-      'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&q=80'
+      'https://images.pexels.com/photos/1659438/pexels-photo-1659438.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1271619/pexels-photo-1271619.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1834399/pexels-photo-1834399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1770809/pexels-photo-1770809.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     'Art & Culture': [
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80',
-      'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80',
-      'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80',
-      'https://images.unsplash.com/photo-1549144511-f099e773c147?w=800&q=80',
-      'https://images.unsplash.com/photo-1520637836862-4d197d17c93a?w=800&q=80'
+      'https://images.pexels.com/photos/1509534/pexels-photo-1509534.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1674049/pexels-photo-1674049.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2123337/pexels-photo-2123337.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2570059/pexels-photo-2570059.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800'
     ]
   };
 
@@ -189,21 +213,21 @@ export class ImageService {
         return curatedImage;
       }
 
-      // Try Unsplash API if available
-      if (this.unsplashAccessKey) {
-        const unsplashImage = await this.searchUnsplash(attractionName, city, category);
-        if (unsplashImage) {
-          this.cache.set(cacheKey, unsplashImage);
-          return unsplashImage;
-        }
-      }
-
       // Try Pexels API if available
       if (this.pexelsApiKey) {
         const pexelsImage = await this.searchPexels(attractionName, city, category);
         if (pexelsImage) {
           this.cache.set(cacheKey, pexelsImage);
           return pexelsImage;
+        }
+      }
+      
+      // Try Unsplash API if available
+      if (this.unsplashAccessKey) {
+        const unsplashImage = await this.searchUnsplash(attractionName, city, category);
+        if (unsplashImage) {
+          this.cache.set(cacheKey, unsplashImage);
+          return unsplashImage;
         }
       }
 
@@ -221,11 +245,21 @@ export class ImageService {
 
   private getCuratedImage(city: string, category: string): string | null {
     const cityKey = city.toLowerCase().replace(/[^a-z]/g, '');
-    const cityImages = this.curatedImages[cityKey];
     
-    if (cityImages && cityImages[category]) {
-      const images = cityImages[category];
+    // Try exact city match
+    if (this.curatedImages[cityKey]?.[category]) {
+      const images = this.curatedImages[cityKey][category];
       return images[Math.floor(Math.random() * images.length)];
+    }
+    
+    // Try partial city match
+    for (const [key, categories] of Object.entries(this.curatedImages)) {
+      if (cityKey.includes(key) || key.includes(cityKey)) {
+        if (categories[category]) {
+          const images = categories[category];
+          return images[Math.floor(Math.random() * images.length)];
+        }
+      }
     }
     
     return null;
@@ -294,47 +328,103 @@ export class ImageService {
     }
 
     try {
-      // Try to get a beautiful hero image for the destination
-      if (this.unsplashAccessKey) {
-        const response = await fetch(
-          `https://api.unsplash.com/search/photos?query=${encodeURIComponent(destination + ' cityscape skyline')}&per_page=1&orientation=landscape`,
-          {
-            headers: {
-              'Authorization': `Client-ID ${this.unsplashAccessKey}`
+      // Try Pexels API first if available
+      if (this.pexelsApiKey) {
+        try {
+          const response = await fetch(
+            `https://api.pexels.com/v1/search?query=${encodeURIComponent(destination + ' skyline landmark')}&per_page=1&orientation=landscape`,
+            {
+              headers: {
+                'Authorization': this.pexelsApiKey
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.photos && data.photos.length > 0) {
+              const imageUrl = data.photos[0].src.large2x || data.photos[0].src.large;
+              this.cache.set(cacheKey, imageUrl);
+              return imageUrl;
             }
           }
-        );
+        } catch (error) {
+          console.error('Pexels API error:', error);
+        }
+      }
+      
+      // Try Unsplash API if available
+      if (this.unsplashAccessKey) {
+        try {
+          const response = await fetch(
+            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(destination + ' cityscape skyline')}&per_page=1&orientation=landscape`,
+            {
+              headers: {
+                'Authorization': `Client-ID ${this.unsplashAccessKey}`
+              }
+            }
+          );
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.results && data.results.length > 0) {
-            const imageUrl = data.results[0].urls.regular;
-            this.cache.set(cacheKey, imageUrl);
-            return imageUrl;
+          if (response.ok) {
+            const data = await response.json();
+            if (data.results && data.results.length > 0) {
+              const imageUrl = data.results[0].urls.regular;
+              this.cache.set(cacheKey, imageUrl);
+              return imageUrl;
+            }
           }
+        } catch (error) {
+          console.error('Unsplash API error:', error);
         }
       }
 
       // Fallback to curated destination images
-      const destinationImages = {
-        'san francisco': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80',
-        'new york': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&q=80',
-        'paris': 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=1200&q=80',
-        'london': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&q=80',
-        'tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&q=80',
-        'rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80',
-        'barcelona': 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=1200&q=80',
-        'amsterdam': 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=1200&q=80'
+      const destinationLower = destination.toLowerCase();
+      const destinationImages: Record<string, string> = {
+        'san francisco': 'https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'new york': 'https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'paris': 'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'london': 'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'tokyo': 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'rome': 'https://images.pexels.com/photos/532263/pexels-photo-532263.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'barcelona': 'https://images.pexels.com/photos/819764/pexels-photo-819764.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'amsterdam': 'https://images.pexels.com/photos/967292/pexels-photo-967292.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'berlin': 'https://images.pexels.com/photos/2570063/pexels-photo-2570063.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'sydney': 'https://images.pexels.com/photos/995764/pexels-photo-995764.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'venice': 'https://images.pexels.com/photos/1796715/pexels-photo-1796715.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'kyoto': 'https://images.pexels.com/photos/1440476/pexels-photo-1440476.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'dubai': 'https://images.pexels.com/photos/823696/pexels-photo-823696.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'singapore': 'https://images.pexels.com/photos/1842332/pexels-photo-1842332.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'hong kong': 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'bangkok': 'https://images.pexels.com/photos/1031659/pexels-photo-1031659.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'istanbul': 'https://images.pexels.com/photos/2042109/pexels-photo-2042109.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'prague': 'https://images.pexels.com/photos/2346216/pexels-photo-2346216.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'vienna': 'https://images.pexels.com/photos/3254729/pexels-photo-3254729.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        'budapest': 'https://images.pexels.com/photos/1757433/pexels-photo-1757433.jpeg?auto=compress&cs=tinysrgb&w=1200'
       };
-
-      const cityKey = destination.toLowerCase().replace(/[^a-z]/g, '');
-      const fallbackImage = destinationImages[cityKey] || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80';
       
+      // Try exact match first
+      if (destinationImages[destinationLower]) {
+        const imageUrl = destinationImages[destinationLower];
+        this.cache.set(cacheKey, imageUrl);
+        return imageUrl;
+      }
+      
+      // Try partial match
+      for (const [key, url] of Object.entries(destinationImages)) {
+        if (destinationLower.includes(key) || key.includes(destinationLower)) {
+          this.cache.set(cacheKey, url);
+          return url;
+        }
+      }
+      
+      // Default fallback
+      const fallbackImage = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=1200';
       this.cache.set(cacheKey, fallbackImage);
       return fallbackImage;
     } catch (error) {
       console.error('Error fetching destination image:', error);
-      const fallbackImage = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80';
+      const fallbackImage = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=1200';
       this.cache.set(cacheKey, fallbackImage);
       return fallbackImage;
     }
@@ -359,13 +449,40 @@ export class ImageService {
       const primaryImage = await this.getAttractionImage(attractionName, city, category);
       images.push(primaryImage);
 
-      // Get additional images from category
-      const categoryImages = this.categoryImages[category] || this.categoryImages['Parks & Nature'];
-      const additionalImages = categoryImages
-        .filter(img => img !== primaryImage)
-        .slice(0, count - 1);
-      
-      images.push(...additionalImages);
+      // Try Pexels API for additional images if available
+      if (this.pexelsApiKey && images.length < count) {
+        try {
+          const query = `${attractionName} ${city} ${category}`.replace(/[^a-zA-Z0-9\s]/g, '');
+          const response = await fetch(
+            `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${count - images.length}&orientation=landscape`,
+            {
+              headers: {
+                'Authorization': this.pexelsApiKey
+              }
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.photos && data.photos.length > 0) {
+              const pexelsImages = data.photos.map((photo: any) => photo.src.large);
+              images.push(...pexelsImages);
+            }
+          }
+        } catch (error) {
+          console.error('Pexels gallery error:', error);
+        }
+      }
+
+      // Get additional images from category if needed
+      if (images.length < count) {
+        const categoryImages = this.categoryImages[category] || this.categoryImages['Parks & Nature'];
+        const additionalImages = categoryImages
+          .filter(img => img !== primaryImage)
+          .slice(0, count - images.length);
+        
+        images.push(...additionalImages);
+      }
       
       return images.slice(0, count);
     } catch (error) {

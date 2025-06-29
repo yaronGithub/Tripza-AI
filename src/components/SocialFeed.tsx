@@ -6,17 +6,91 @@ import { ImageGallery } from './ImageGallery';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from './NotificationToast';
 import { LoadingSpinner } from './LoadingSpinner';
+import { googleMapsService } from '../services/googleMapsService';
+import { imageService } from '../services/imageService';
 
 export function SocialFeed() {
   const { posts, loading, likePost, savePost } = useSocial();
   const { user } = useAuth();
   const { showInfo } = useToast();
   const [refreshing, setRefreshing] = useState(false);
+  const [postImages, setPostImages] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     // Simulate a refresh when component mounts
     handleRefresh();
   }, []);
+
+  useEffect(() => {
+    // Load images for posts that don't have them
+    loadPostImages();
+  }, [posts]);
+
+  const loadPostImages = async () => {
+    const newPostImages: Record<string, string[]> = { ...postImages };
+    let updated = false;
+
+    for (const post of posts) {
+      // Skip if post already has photos or if we've already loaded images for it
+      if ((post.photos && post.photos.length > 0) || newPostImages[post.id]) {
+        continue;
+      }
+
+      try {
+        // Try to get images for the post based on trip destination
+        if (post.trip) {
+          const destination = post.trip.destination;
+          
+          // Try Google Maps first
+          if (googleMapsService.isAvailable()) {
+            try {
+              await googleMapsService.initialize();
+              const places = await googleMapsService.searchPlaces(`${destination} landmark`);
+              
+              if (places && places.length > 0 && places[0].photos && places[0].photos.length > 0) {
+                const photos = googleMapsService.getPlacePhotos(places[0], 3);
+                if (photos.length > 0) {
+                  newPostImages[post.id] = photos;
+                  updated = true;
+                  continue;
+                }
+              }
+            } catch (error) {
+              console.warn('Error loading Google Maps images:', error);
+            }
+          }
+          
+          // Fallback to image service
+          try {
+            const image = await imageService.getDestinationHeroImage(destination);
+            newPostImages[post.id] = [image];
+            updated = true;
+          } catch (error) {
+            console.error('Error loading destination image:', error);
+            
+            // Use fallback images based on destination
+            const destination = post.trip.destination.toLowerCase();
+            if (destination.includes('paris')) {
+              newPostImages[post.id] = ['https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=800'];
+            } else if (destination.includes('tokyo')) {
+              newPostImages[post.id] = ['https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=800'];
+            } else if (destination.includes('new york')) {
+              newPostImages[post.id] = ['https://images.pexels.com/photos/802024/pexels-photo-802024.jpeg?auto=compress&cs=tinysrgb&w=800'];
+            } else {
+              newPostImages[post.id] = ['https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800'];
+            }
+            updated = true;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading post images:', error);
+      }
+    }
+
+    if (updated) {
+      setPostImages(newPostImages);
+    }
+  };
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -45,6 +119,18 @@ export function SocialFeed() {
     // Wait a bit to simulate loading
     await new Promise(resolve => setTimeout(resolve, 1000));
     setRefreshing(false);
+  };
+
+  const getPostPhotos = (post: SocialPost): string[] => {
+    if (post.photos && post.photos.length > 0) {
+      return post.photos;
+    }
+    
+    if (postImages[post.id]) {
+      return postImages[post.id];
+    }
+    
+    return [];
   };
 
   if (loading) {
@@ -176,27 +262,35 @@ export function SocialFeed() {
           )}
 
           {/* Photo Gallery */}
-          {post.photos && post.photos.length > 0 && (
+          {getPostPhotos(post).length > 0 && (
             <div className="px-6 mb-4">
               <div className="relative h-80 rounded-xl overflow-hidden">
-                {post.photos.length === 1 ? (
+                {getPostPhotos(post).length === 1 ? (
                   <img
-                    src={post.photos[0]}
+                    src={getPostPhotos(post)[0]}
                     alt="Post photo"
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
+                    }}
                   />
                 ) : (
                   <div className="grid grid-cols-2 gap-2 h-full">
-                    {post.photos.slice(0, 4).map((photo, index) => (
+                    {getPostPhotos(post).slice(0, 4).map((photo, index) => (
                       <div key={index} className="relative">
                         <img
                           src={photo}
                           alt={`Post photo ${index + 1}`}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
+                          }}
                         />
-                        {index === 3 && post.photos.length > 4 && (
+                        {index === 3 && getPostPhotos(post).length > 4 && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                            <span className="text-white text-xl font-bold">+{post.photos.length - 4}</span>
+                            <span className="text-white text-xl font-bold">+{getPostPhotos(post).length - 4}</span>
                           </div>
                         )}
                       </div>
