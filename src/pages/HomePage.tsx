@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { ArrowRight, Sparkles, Map, Users, Clock, Star, Globe, Zap, Heart, Award, Rocket, Brain, Shield } from 'lucide-react';
-import { DemoVideoPlayer } from '../components/DemoVideoPlayer';
+import { ArrowRight, Sparkles, Map, Users, Clock, Star, Globe, Zap, Heart, Award, Rocket, Brain, Shield, Camera } from 'lucide-react';
+import { TravelInspirationGallery } from '../components/TravelInspirationGallery';
 
 interface HomePageProps {
   onNavigateToCreate: () => void;
 }
 
 export function HomePage({ onNavigateToCreate }: HomePageProps) {
-  const [showDemoVideo, setShowDemoVideo] = useState(false);
+  const [showInspirationGallery, setShowInspirationGallery] = useState(false);
 
   const features = [
     {
@@ -117,11 +117,11 @@ export function HomePage({ onNavigateToCreate }: HomePageProps) {
               </button>
               
               <button 
-                onClick={() => setShowDemoVideo(true)}
+                onClick={() => setShowInspirationGallery(true)}
                 className="inline-flex items-center px-10 py-5 glass border-2 border-purple-300/50 text-purple-700 text-lg font-bold rounded-3xl hover-lift transition-premium"
               >
-                <Globe className="w-6 h-6 mr-3" />
-                Watch Demo
+                <Camera className="w-6 h-6 mr-3" />
+                Travel Inspiration
               </button>
             </div>
 
@@ -302,10 +302,10 @@ export function HomePage({ onNavigateToCreate }: HomePageProps) {
         </div>
       </section>
 
-      {/* Demo Video Player */}
-      <DemoVideoPlayer 
-        isOpen={showDemoVideo} 
-        onClose={() => setShowDemoVideo(false)} 
+      {/* Travel Inspiration Gallery */}
+      <TravelInspirationGallery 
+        isOpen={showInspirationGallery} 
+        onClose={() => setShowInspirationGallery(false)} 
       />
     </div>
   );
