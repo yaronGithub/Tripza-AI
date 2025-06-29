@@ -14,8 +14,9 @@ import { AICuisineGuide } from '../components/AICuisineGuide';
 import { AILanguageAssistant } from '../components/AILanguageAssistant';
 import { AIPhotoGenerator } from '../components/AIPhotoGenerator';
 import { AICustomItinerary } from '../components/AICustomItinerary';
+import { AITravelCompanion } from '../components/AITravelCompanion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Brain, Utensils, Globe, Camera, Lightbulb } from 'lucide-react';
+import { Brain, Utensils, Globe, Camera, Lightbulb, MessageCircle } from 'lucide-react';
 
 export function CreateTripPage() {
   const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
@@ -141,13 +142,23 @@ export function CreateTripPage() {
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       {currentTrip ? (
-        <EnhancedItineraryDisplay
-          trip={currentTrip}
-          onEdit={handleEditTrip}
-          onSave={handleSaveTrip}
-          saveLoading={saveLoading}
-          onTripUpdate={handleTripUpdate}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Trip Display */}
+          <div className="lg:col-span-2">
+            <EnhancedItineraryDisplay
+              trip={currentTrip}
+              onEdit={handleEditTrip}
+              onSave={handleSaveTrip}
+              saveLoading={saveLoading}
+              onTripUpdate={handleTripUpdate}
+            />
+          </div>
+          
+          {/* AI Travel Companion Sidebar */}
+          <div className="lg:col-span-1">
+            <AITravelCompanion trip={currentTrip} className="sticky top-8" />
+          </div>
+        </div>
       ) : (
         <div>
           {/* Page Header */}
@@ -164,10 +175,14 @@ export function CreateTripPage() {
           {/* Tabs for different AI tools */}
           <div className="max-w-6xl mx-auto mb-12">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-5 mb-8">
+              <TabsList className="grid grid-cols-6 mb-8">
                 <TabsTrigger value="generator" className="flex items-center">
                   <Brain className="w-5 h-5 mr-2" />
                   <span>Trip Generator</span>
+                </TabsTrigger>
+                <TabsTrigger value="companion" className="flex items-center">
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  <span>AI Companion</span>
                 </TabsTrigger>
                 <TabsTrigger value="destination" className="flex items-center">
                   <Globe className="w-5 h-5 mr-2" />
@@ -189,6 +204,10 @@ export function CreateTripPage() {
               
               <TabsContent value="generator">
                 <AITripGenerator onTripGenerated={handleFormSubmit} isLoading={isLoading} />
+              </TabsContent>
+              
+              <TabsContent value="companion">
+                <AITravelCompanion />
               </TabsContent>
               
               <TabsContent value="destination">

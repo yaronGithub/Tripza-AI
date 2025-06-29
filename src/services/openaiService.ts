@@ -14,12 +14,143 @@ interface TripAnalysis {
   localInsights: string[];
 }
 
+interface TravelCompanionResponse {
+  content: string;
+  suggestions: string[];
+}
+
 class OpenAIService {
   private apiKey: string | undefined;
   private baseURL = 'https://api.openai.com/v1';
 
   constructor() {
     this.apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  }
+
+  async generateTravelCompanionResponse(userMessage: string, trip?: any): Promise<TravelCompanionResponse> {
+    if (!this.apiKey) {
+      return this.generateFallbackCompanionResponse(userMessage, trip);
+    }
+
+    try {
+      const tripContext = trip ? `
+        Current trip context:
+        - Destination: ${trip.destination}
+        - Duration: ${trip.itinerary?.length || 'Unknown'} days
+        - Interests: ${trip.preferences?.join(', ') || 'General sightseeing'}
+        - Attractions planned: ${trip.itinerary?.reduce((sum: number, day: any) => sum + (day.attractions?.length || 0), 0) || 0}
+      ` : 'No specific trip context available.';
+
+      const prompt = `You are an enthusiastic, knowledgeable AI travel companion. The user said: "${userMessage}"
+
+      ${tripContext}
+
+      Respond as a helpful travel expert who:
+      - Provides specific, actionable advice
+      - Shows enthusiasm for travel
+      - Offers practical tips and insights
+      - Suggests follow-up questions or actions
+      - Keeps responses conversational and engaging
+      - Focuses on enhancing the travel experience
+
+      Provide your response in JSON format with:
+      - content: Your main response (keep it conversational, max 150 words)
+      - suggestions: Array of 3-4 follow-up questions/actions the user might want to ask
+
+      Make it personal and helpful!`;
+
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert travel companion AI who provides personalized, enthusiastic, and practical travel advice. Always respond with valid JSON containing content and suggestions fields.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 300,
+          temperature: 0.8,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data: OpenAIResponse = await response.json();
+      const content = data.choices[0]?.message?.content || '';
+      
+      try {
+        const parsed = JSON.parse(content);
+        return {
+          content: parsed.content || "I'm here to help with your travel plans! What would you like to know?",
+          suggestions: parsed.suggestions || ['Tell me more', 'Give me tips', 'What else should I know?']
+        };
+      } catch (parseError) {
+        console.error('Error parsing AI response:', parseError);
+        return this.generateFallbackCompanionResponse(userMessage, trip);
+      }
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return this.generateFallbackCompanionResponse(userMessage, trip);
+    }
+  }
+
+  private generateFallbackCompanionResponse(userMessage: string, trip?: any): TravelCompanionResponse {
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('itinerary') || message.includes('plan')) {
+      return {
+        content: trip 
+          ? `Your ${trip.destination} itinerary looks great! You have ${trip.itinerary?.length || 0} days planned with ${trip.itinerary?.reduce((sum: number, day: any) => sum + (day.attractions?.length || 0), 0) || 0} attractions. The route is optimized to minimize travel time between locations.`
+          : "I'd love to help you plan an itinerary! What destination are you thinking about?",
+        suggestions: trip 
+          ? ['How can I optimize my route?', 'What should I pack?', 'Give me local dining tips', 'Best photo spots?']
+          : ['Plan a trip to Paris', 'Plan a trip to Tokyo', 'Plan a trip to New York', 'Help me choose a destination']
+      };
+    }
+
+    if (message.includes('pack') || message.includes('bring')) {
+      return {
+        content: trip
+          ? `For your ${trip.destination} trip, pack comfortable walking shoes, weather-appropriate clothing, and a portable charger. Check the local weather forecast before you go!`
+          : "Packing smart is key to a great trip! The essentials include comfortable shoes, weather-appropriate clothes, and important documents.",
+        suggestions: ['What about electronics?', 'Local weather tips', 'Cultural dress codes', 'Travel insurance advice']
+      };
+    }
+
+    if (message.includes('tip') || message.includes('advice')) {
+      return {
+        content: trip
+          ? `Here's a pro tip for ${trip.destination}: Visit popular attractions early morning or late afternoon to avoid crowds. Also, try to learn a few basic phrases in the local language - locals appreciate the effort!`
+          : "Here's a universal travel tip: Always keep digital and physical copies of important documents, and notify your bank about travel plans to avoid card issues!",
+        suggestions: ['More local tips', 'Transportation advice', 'Cultural etiquette', 'Money-saving tips']
+      };
+    }
+
+    if (message.includes('food') || message.includes('eat') || message.includes('restaurant')) {
+      return {
+        content: trip
+          ? `${trip.destination} has amazing local cuisine! I recommend trying authentic local dishes at neighborhood restaurants rather than tourist areas. Food markets are also great for experiencing local flavors.`
+          : "Food is one of the best parts of traveling! Always try local specialties, visit food markets, and don't be afraid to eat where the locals eat.",
+        suggestions: ['Best local dishes', 'Food safety tips', 'Dietary restrictions help', 'Street food recommendations']
+      };
+    }
+
+    // Default response
+    return {
+      content: "I'm your AI travel companion, here to make your trip amazing! I can help with planning, local tips, packing advice, and answering any travel questions you have.",
+      suggestions: ['Plan a new trip', 'Get packing tips', 'Local recommendations', 'Travel safety advice']
+    };
   }
 
   async generateTripDescription(destination: string, preferences: string[], duration: number): Promise<string> {
