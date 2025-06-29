@@ -48,6 +48,7 @@ export function useAuth() {
           id: data.user.id,
           email: data.user.email!,
           name,
+          username: email.split('@')[0] + Math.floor(Math.random() * 1000), // Generate a random username
         });
 
       if (profileError) throw profileError;
@@ -71,6 +72,43 @@ export function useAuth() {
     if (error) throw error;
   };
 
+  const updateUserAvatar = async (avatarUrl: string) => {
+    if (!user) return;
+    
+    try {
+      // Update auth metadata
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { avatar_url: avatarUrl }
+      });
+      
+      if (authError) throw authError;
+      
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', user.id);
+        
+      if (profileError) throw profileError;
+      
+      // Update local user state
+      if (user) {
+        setUser({
+          ...user,
+          user_metadata: {
+            ...user.user_metadata,
+            avatar_url: avatarUrl
+          }
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      throw error;
+    }
+  };
+
   return {
     user,
     session,
@@ -78,5 +116,6 @@ export function useAuth() {
     signUp,
     signIn,
     signOut,
+    updateUserAvatar
   };
 }

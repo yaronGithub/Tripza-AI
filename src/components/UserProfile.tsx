@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MapPin, Calendar, Users, Heart, Bookmark, Settings, Edit, Camera, Globe, Star, TrendingUp, Save, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { MapPin, Calendar, Users, Heart, Bookmark, Settings, Edit, Camera, Globe, Star, TrendingUp, Save, X, Upload, Image } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useUserProfile } from '../hooks/useSocial';
 import { useTrips } from '../hooks/useTrips';
@@ -23,6 +23,8 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
     website: ''
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const profileUserId = userId || user?.id;
   const { profile, userPosts, isFollowing, loading, toggleFollow } = useUserProfile(profileUserId);
@@ -106,6 +108,181 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
       showError('Update Failed', 'Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    if (isOwnProfile && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showError('Invalid File', 'Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showError('File Too Large', 'Please select an image smaller than 5MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      // Generate a unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(filePath);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          avatar_url: urlData.publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      showSuccess('Avatar Updated', 'Your profile picture has been updated successfully');
+      
+      // Refresh the page to show the new avatar
+      window.location.reload();
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      showError('Upload Failed', 'Failed to upload profile picture. Please try again.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleCapturePhoto = () => {
+    // Check if the device has a camera
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      // Create a video element to capture the photo
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      
+      // Set up the camera stream
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          // Create a modal to show the camera feed
+          const modal = document.createElement('div');
+          modal.style.position = 'fixed';
+          modal.style.top = '0';
+          modal.style.left = '0';
+          modal.style.width = '100%';
+          modal.style.height = '100%';
+          modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+          modal.style.zIndex = '9999';
+          modal.style.display = 'flex';
+          modal.style.flexDirection = 'column';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
+          
+          // Add video element to the modal
+          video.srcObject = stream;
+          video.style.width = '100%';
+          video.style.maxWidth = '500px';
+          video.style.borderRadius = '8px';
+          modal.appendChild(video);
+          
+          // Add capture button
+          const captureButton = document.createElement('button');
+          captureButton.textContent = 'Take Photo';
+          captureButton.style.marginTop = '16px';
+          captureButton.style.padding = '8px 16px';
+          captureButton.style.backgroundColor = '#3B82F6';
+          captureButton.style.color = 'white';
+          captureButton.style.border = 'none';
+          captureButton.style.borderRadius = '8px';
+          captureButton.style.cursor = 'pointer';
+          modal.appendChild(captureButton);
+          
+          // Add cancel button
+          const cancelButton = document.createElement('button');
+          cancelButton.textContent = 'Cancel';
+          cancelButton.style.marginTop = '8px';
+          cancelButton.style.padding = '8px 16px';
+          cancelButton.style.backgroundColor = '#EF4444';
+          cancelButton.style.color = 'white';
+          cancelButton.style.border = 'none';
+          cancelButton.style.borderRadius = '8px';
+          cancelButton.style.cursor = 'pointer';
+          modal.appendChild(cancelButton);
+          
+          // Add modal to the document
+          document.body.appendChild(modal);
+          
+          // Start video playback
+          video.play();
+          
+          // Handle capture button click
+          captureButton.onclick = () => {
+            // Set canvas dimensions to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw the current video frame to the canvas
+            canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert canvas to blob
+            canvas.toBlob(async (blob) => {
+              if (blob) {
+                // Clean up
+                video.srcObject = null;
+                stream.getTracks().forEach(track => track.stop());
+                document.body.removeChild(modal);
+                
+                // Create a File object from the blob
+                const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+                
+                // Create a fake event to reuse the file upload handler
+                const fakeEvent = {
+                  target: {
+                    files: [file]
+                  }
+                } as unknown as React.ChangeEvent<HTMLInputElement>;
+                
+                // Process the captured photo
+                handleFileChange(fakeEvent);
+              }
+            }, 'image/jpeg', 0.95);
+          };
+          
+          // Handle cancel button click
+          cancelButton.onclick = () => {
+            // Clean up
+            video.srcObject = null;
+            stream.getTracks().forEach(track => track.stop());
+            document.body.removeChild(modal);
+          };
+        })
+        .catch(err => {
+          console.error('Error accessing camera:', err);
+          showError('Camera Error', 'Could not access your camera. Please check permissions.');
+        });
+    } else {
+      showError('Camera Not Available', 'Your device does not support camera access');
     }
   };
 
@@ -266,7 +443,8 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
                 <img
                   src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=6366f1&color=fff`}
                   alt={profile.name || 'User'}
-                  className="w-32 h-32 rounded-2xl border-4 border-white shadow-lg object-cover"
+                  className="w-32 h-32 rounded-2xl border-4 border-white shadow-lg object-cover cursor-pointer"
+                  onClick={handleAvatarClick}
                 />
                 {profile.verified && (
                   <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
@@ -274,10 +452,20 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
                   </div>
                 )}
                 {isOwnProfile && (
-                  <button className="absolute bottom-2 right-2 p-2 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow">
-                    <Camera className="w-4 h-4 text-gray-600" />
-                  </button>
+                  <div className="absolute bottom-0 right-0 left-0 bg-black/50 py-2 text-center text-white text-xs rounded-b-2xl">
+                    <Camera className="w-4 h-4 mx-auto" />
+                    <span>Change Photo</span>
+                  </div>
                 )}
+                
+                {/* Hidden file input */}
+                <input 
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
             </div>
 
@@ -285,6 +473,15 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
               {isOwnProfile ? (
                 <>
+                  <div className="relative group">
+                    <button 
+                      onClick={handleCapturePhoto}
+                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Take Photo
+                    </button>
+                  </div>
                   <button 
                     onClick={handleEditProfile}
                     className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center"
