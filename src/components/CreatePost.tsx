@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Smile, X, Image as ImageIcon, Calendar, Users } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useTrips } from '../hooks/useTrips';
+import { useSocial } from '../hooks/useSocial';
 import { Trip } from '../types';
 
 interface CreatePostProps {
@@ -13,47 +15,24 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [trip, setTrip] = useState<Trip | null>(selectedTrip || null);
   const [isPosting, setIsPosting] = useState(false);
+  
   const { user } = useAuth();
-
-  const mockTrips: Trip[] = [
-    {
-      id: '1',
-      title: 'Paris Art & Culture Immersion',
-      destination: 'Paris, France',
-      startDate: '2024-03-15',
-      endDate: '2024-03-18',
-      preferences: ['Museums & Galleries', 'Art & Culture'],
-      itinerary: [],
-      isPublic: true,
-      userId: user?.id || '',
-      createdAt: '2024-03-10T10:00:00Z',
-      updatedAt: '2024-03-10T10:00:00Z'
-    },
-    {
-      id: '2',
-      title: 'Tokyo Foodie Adventure',
-      destination: 'Tokyo, Japan',
-      startDate: '2024-02-10',
-      endDate: '2024-02-14',
-      preferences: ['Restaurants & Foodie Spots', 'Art & Culture'],
-      itinerary: [],
-      isPublic: true,
-      userId: user?.id || '',
-      createdAt: '2024-02-05T08:00:00Z',
-      updatedAt: '2024-02-05T08:00:00Z'
-    }
-  ];
+  const { trips } = useTrips(user?.id);
+  const { createPost } = useSocial();
 
   const handlePost = async () => {
-    if (!caption.trim() || !trip) return;
+    if (!caption.trim()) return;
 
     setIsPosting(true);
     
-    // Simulate posting
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsPosting(false);
-    onClose();
+    try {
+      await createPost(caption, trip?.id || null, selectedImages);
+      onClose();
+    } catch (error) {
+      console.error('Error creating post:', error);
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   const addSampleImages = () => {
@@ -98,10 +77,22 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
               <MapPin className="w-4 h-4 inline mr-2" />
-              Select a trip to share
+              Select a trip to share (optional)
             </label>
-            <div className="space-y-2">
-              {mockTrips.map((tripOption) => (
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              <button
+                onClick={() => setTrip(null)}
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                  !trip
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="font-medium text-gray-900">No trip selected</div>
+                <div className="text-sm text-gray-600">Share a general travel post</div>
+              </button>
+              
+              {trips.map((tripOption) => (
                 <button
                   key={tripOption.id}
                   onClick={() => setTrip(tripOption)}
@@ -214,7 +205,7 @@ export function CreatePost({ onClose, selectedTrip }: CreatePostProps) {
             
             <button
               onClick={handlePost}
-              disabled={!caption.trim() || !trip || isPosting}
+              disabled={!caption.trim() || isPosting}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPosting ? 'Posting...' : 'Share Trip'}

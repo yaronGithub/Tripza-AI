@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { MapPin, Calendar, Users, Heart, Bookmark, Settings, Edit, Camera, Globe, Star, TrendingUp } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { Trip } from '../types';
+import { useUserProfile } from '../hooks/useSocial';
+import { useTrips } from '../hooks/useTrips';
 
 interface UserProfileProps {
   userId?: string;
@@ -11,62 +12,10 @@ interface UserProfileProps {
 export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'trips' | 'liked' | 'saved'>('trips');
-  const [isFollowing, setIsFollowing] = useState(false);
-
-  // Mock user data
-  const profileUser = {
-    id: userId || user?.id || '',
-    name: isOwnProfile ? (user?.user_metadata?.name || 'Your Name') : 'Sarah Chen',
-    username: isOwnProfile ? 'you' : 'sarahexplores',
-    bio: isOwnProfile 
-      ? 'Travel enthusiast exploring the world one trip at a time ✈️' 
-      : 'Digital nomad • Travel photographer • Coffee addict ☕ Currently exploring Europe 🇪🇺',
-    avatar: isOwnProfile 
-      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'You')}&background=6366f1&color=fff`
-      : 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200&h=200&fit=crop&crop=face',
-    verified: !isOwnProfile,
-    location: isOwnProfile ? 'Your Location' : 'San Francisco, CA',
-    joinedDate: '2023-01-15',
-    stats: {
-      trips: isOwnProfile ? 3 : 24,
-      followers: isOwnProfile ? 12 : 1247,
-      following: isOwnProfile ? 8 : 892,
-      likes: isOwnProfile ? 45 : 3421
-    }
-  };
-
-  const mockTrips: Trip[] = [
-    {
-      id: '1',
-      title: 'Paris Art & Culture Immersion',
-      destination: 'Paris, France',
-      startDate: '2024-03-15',
-      endDate: '2024-03-18',
-      preferences: ['Museums & Galleries', 'Art & Culture'],
-      itinerary: [],
-      isPublic: true,
-      userId: profileUser.id,
-      createdAt: '2024-03-10T10:00:00Z',
-      updatedAt: '2024-03-10T10:00:00Z'
-    },
-    {
-      id: '2',
-      title: 'Tokyo Foodie Adventure',
-      destination: 'Tokyo, Japan',
-      startDate: '2024-02-10',
-      endDate: '2024-02-14',
-      preferences: ['Restaurants & Foodie Spots', 'Art & Culture'],
-      itinerary: [],
-      isPublic: true,
-      userId: profileUser.id,
-      createdAt: '2024-02-05T08:00:00Z',
-      updatedAt: '2024-02-05T08:00:00Z'
-    }
-  ];
-
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-  };
+  
+  const profileUserId = userId || user?.id;
+  const { profile, userPosts, isFollowing, loading, toggleFollow } = useUserProfile(profileUserId);
+  const { trips } = useTrips(profileUserId);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -74,6 +23,35 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
       year: 'numeric'
     });
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto animate-pulse">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+          <div className="h-48 bg-gray-200"></div>
+          <div className="px-8 py-6">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-16 mb-6">
+              <div className="w-32 h-32 bg-gray-200 rounded-2xl"></div>
+            </div>
+            <div className="space-y-3">
+              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Profile not found</h2>
+        <p className="text-gray-600">The user profile you're looking for doesn't exist.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -95,11 +73,11 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
             <div className="flex items-end">
               <div className="relative">
                 <img
-                  src={profileUser.avatar}
-                  alt={profileUser.name}
+                  src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=6366f1&color=fff`}
+                  alt={profile.name || 'User'}
                   className="w-32 h-32 rounded-2xl border-4 border-white shadow-lg object-cover"
                 />
-                {profileUser.verified && (
+                {profile.verified && (
                   <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
                     <span className="text-white text-sm">✓</span>
                   </div>
@@ -127,7 +105,7 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
               ) : (
                 <>
                   <button
-                    onClick={handleFollow}
+                    onClick={toggleFollow}
                     className={`px-6 py-2 rounded-lg font-medium transition-colors ${
                       isFollowing
                         ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -147,22 +125,26 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
           {/* User Details */}
           <div className="mb-6">
             <div className="flex items-center mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">{profileUser.name}</h1>
-              {profileUser.verified && (
+              <h1 className="text-3xl font-bold text-gray-900">{profile.name}</h1>
+              {profile.verified && (
                 <span className="ml-2 text-blue-500">✓</span>
               )}
             </div>
-            <p className="text-gray-600 mb-1">@{profileUser.username}</p>
-            <p className="text-gray-800 mb-4">{profileUser.bio}</p>
+            <p className="text-gray-600 mb-1">@{profile.username}</p>
+            {profile.bio && (
+              <p className="text-gray-800 mb-4">{profile.bio}</p>
+            )}
             
             <div className="flex items-center text-sm text-gray-600 space-x-4">
-              <div className="flex items-center">
-                <MapPin className="w-4 h-4 mr-1" />
-                <span>{profileUser.location}</span>
-              </div>
+              {profile.location && (
+                <div className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  <span>{profile.location}</span>
+                </div>
+              )}
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />
-                <span>Joined {formatDate(profileUser.joinedDate)}</span>
+                <span>Joined {formatDate(profile.created_at)}</span>
               </div>
               <div className="flex items-center">
                 <Globe className="w-4 h-4 mr-1" />
@@ -174,20 +156,20 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
           {/* Stats */}
           <div className="grid grid-cols-4 gap-6 py-4 border-t border-gray-100">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{profileUser.stats.trips}</div>
-              <div className="text-sm text-gray-600">Trips</div>
+              <div className="text-2xl font-bold text-gray-900">{profile.posts_count}</div>
+              <div className="text-sm text-gray-600">Posts</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{profileUser.stats.followers.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-gray-900">{profile.followers_count}</div>
               <div className="text-sm text-gray-600">Followers</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{profileUser.stats.following}</div>
+              <div className="text-2xl font-bold text-gray-900">{profile.following_count}</div>
               <div className="text-sm text-gray-600">Following</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{profileUser.stats.likes.toLocaleString()}</div>
-              <div className="text-sm text-gray-600">Likes</div>
+              <div className="text-2xl font-bold text-gray-900">{trips.length}</div>
+              <div className="text-sm text-gray-600">Trips</div>
             </div>
           </div>
         </div>
@@ -207,7 +189,7 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
               }`}
             >
               <MapPin className="w-5 h-5 inline mr-2" />
-              Trips ({profileUser.stats.trips})
+              Trips ({trips.length})
             </button>
             <button
               onClick={() => setActiveTab('liked')}
@@ -238,7 +220,7 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
         <div className="p-6">
           {activeTab === 'trips' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {mockTrips.map((trip) => (
+              {trips.map((trip) => (
                 <div key={trip.id} className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100 hover:shadow-lg transition-all duration-300 group">
                   <div className="flex items-start justify-between mb-4">
                     <div>

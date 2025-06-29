@@ -1,44 +1,9 @@
 import React from 'react';
 import { TrendingUp, Users, MapPin, Star, Calendar, Globe } from 'lucide-react';
+import { useTrendingData } from '../hooks/useSocial';
 
 export function SocialSidebar() {
-  const trendingDestinations = [
-    { name: 'Paris, France', posts: 1247, trend: '+12%' },
-    { name: 'Tokyo, Japan', posts: 892, trend: '+8%' },
-    { name: 'New York, USA', posts: 756, trend: '+15%' },
-    { name: 'London, UK', posts: 634, trend: '+5%' },
-    { name: 'Barcelona, Spain', posts: 523, trend: '+22%' }
-  ];
-
-  const suggestedUsers = [
-    {
-      id: '1',
-      name: 'Alex Rivera',
-      username: 'alexexplores',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      followers: '2.3K',
-      verified: true,
-      bio: 'Adventure photographer'
-    },
-    {
-      id: '2',
-      name: 'Maya Patel',
-      username: 'mayatravels',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      followers: '1.8K',
-      verified: false,
-      bio: 'Solo travel enthusiast'
-    },
-    {
-      id: '3',
-      name: 'David Kim',
-      username: 'davidwanders',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      followers: '3.1K',
-      verified: true,
-      bio: 'Food & culture explorer'
-    }
-  ];
+  const { trendingDestinations, suggestedUsers, loading } = useTrendingData();
 
   const upcomingEvents = [
     {
@@ -56,6 +21,23 @@ export function SocialSidebar() {
       type: 'San Francisco'
     }
   ];
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="space-y-3">
+              {[...Array(3)].map((_, j) => (
+                <div key={j} className="h-12 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -90,13 +72,13 @@ export function SocialSidebar() {
           <h3 className="text-lg font-bold text-gray-900">Suggested for You</h3>
         </div>
         <div className="space-y-4">
-          {suggestedUsers.map((user) => (
+          {suggestedUsers.slice(0, 3).map((user) => (
             <div key={user.id} className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="relative">
                   <img
-                    src={user.avatar}
-                    alt={user.name}
+                    src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff`}
+                    alt={user.name || 'User'}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   {user.verified && (
@@ -108,7 +90,7 @@ export function SocialSidebar() {
                 <div className="ml-3">
                   <div className="font-medium text-gray-900">{user.name}</div>
                   <div className="text-sm text-gray-600">@{user.username}</div>
-                  <div className="text-xs text-gray-500">{user.followers} followers</div>
+                  <div className="text-xs text-gray-500">{user.followers_count} followers</div>
                 </div>
               </div>
               <button className="px-4 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
