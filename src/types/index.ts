@@ -18,6 +18,13 @@ export interface Attraction {
   rating: number;
   imageUrl?: string;
   address: string;
+  // Enhanced Google Maps fields
+  photos?: string[];
+  googlePlaceId?: string;
+  website?: string;
+  phoneNumber?: string;
+  priceLevel?: number;
+  userRatingsTotal?: number;
 }
 
 export interface DayPlan {

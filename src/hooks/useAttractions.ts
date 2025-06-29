@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Attraction } from '../types';
 import { Database } from '../types/database';
-import { attractionService } from '../services/attractionService';
+import { enhancedAttractionService } from '../services/enhancedAttractionService';
 
 type DbAttraction = Database['public']['Tables']['attractions']['Row'];
 
@@ -36,7 +36,19 @@ export function useAttractions() {
 
   const searchAttractions = async (city: string, preferences: string[]): Promise<Attraction[]> => {
     try {
-      // First try to get from database
+      // Use enhanced service that prioritizes Google Maps data
+      console.log(`Searching for attractions in ${city} with preferences:`, preferences);
+      const attractions = await enhancedAttractionService.searchAttractions(
+        city, 
+        preferences.length > 0 ? preferences : ['Parks & Nature', 'Museums & Galleries', 'Historical Sites'], 
+        20
+      );
+
+      return attractions;
+    } catch (error) {
+      console.error('Error searching attractions:', error);
+      
+      // Fallback to database results
       let filtered = attractions;
 
       // Filter by city (simple text matching)
@@ -55,35 +67,6 @@ export function useAttractions() {
         );
       }
 
-      // If we have enough attractions from database, return them
-      if (filtered.length >= 10) {
-        return filtered;
-      }
-
-      // Otherwise, fetch from external APIs
-      console.log(`Fetching attractions for ${city} with preferences:`, preferences);
-      const externalAttractions = await attractionService.searchAttractions(
-        city, 
-        preferences.length > 0 ? preferences : ['Parks & Nature', 'Museums & Galleries', 'Historical Sites'], 
-        20
-      );
-
-      // Combine database and external results
-      const combined = [...filtered, ...externalAttractions];
-      
-      // Remove duplicates based on name and location
-      const unique = combined.filter((attraction, index, self) => 
-        index === self.findIndex(a => 
-          a.name === attraction.name && 
-          Math.abs(a.latitude - attraction.latitude) < 0.001 &&
-          Math.abs(a.longitude - attraction.longitude) < 0.001
-        )
-      );
-
-      return unique;
-    } catch (error) {
-      console.error('Error searching attractions:', error);
-      // Return database results as fallback
       return filtered;
     }
   };
