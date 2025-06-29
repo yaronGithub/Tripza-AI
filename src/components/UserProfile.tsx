@@ -12,7 +12,7 @@ interface UserProfileProps {
 }
 
 export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) {
-  const { user } = useAuth();
+  const { user, updateUserAvatar } = useAuth();
   const [activeTab, setActiveTab] = useState<'trips' | 'liked' | 'saved'>('trips');
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -25,6 +25,7 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCameraOptions, setShowCameraOptions] = useState(false);
   
   const profileUserId = userId || user?.id;
   const { profile, userPosts, isFollowing, loading, toggleFollow } = useUserProfile(profileUserId);
@@ -112,13 +113,20 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
   };
 
   const handleAvatarClick = () => {
-    if (isOwnProfile && fileInputRef.current) {
-      fileInputRef.current.click();
+    if (isOwnProfile) {
+      setShowCameraOptions(true);
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement> | File) => {
+    let file: File | null = null;
+    
+    if (e instanceof File) {
+      file = e;
+    } else {
+      file = e.target.files?.[0] || null;
+    }
+    
     if (!file || !user) return;
 
     // Validate file type
@@ -141,7 +149,7 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
       const filePath = `avatars/${fileName}`;
 
       // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from('profile-images')
         .upload(filePath, file);
 
@@ -152,16 +160,12 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
         .from('profile-images')
         .getPublicUrl(filePath);
 
-      // Update profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          avatar_url: urlData.publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+      if (!urlData.publicUrl) {
+        throw new Error('Failed to get public URL for uploaded image');
+      }
 
-      if (updateError) throw updateError;
+      // Update profile with new avatar URL
+      await updateUserAvatar(urlData.publicUrl);
 
       showSuccess('Avatar Updated', 'Your profile picture has been updated successfully');
       
@@ -172,6 +176,7 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
       showError('Upload Failed', 'Failed to upload profile picture. Please try again.');
     } finally {
       setUploadingAvatar(false);
+      setShowCameraOptions(false);
     }
   };
 
@@ -256,15 +261,8 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
                 // Create a File object from the blob
                 const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
                 
-                // Create a fake event to reuse the file upload handler
-                const fakeEvent = {
-                  target: {
-                    files: [file]
-                  }
-                } as unknown as React.ChangeEvent<HTMLInputElement>;
-                
                 // Process the captured photo
-                handleFileChange(fakeEvent);
+                handleFileChange(file);
               }
             }, 'image/jpeg', 0.95);
           };
@@ -275,14 +273,17 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
             video.srcObject = null;
             stream.getTracks().forEach(track => track.stop());
             document.body.removeChild(modal);
+            setShowCameraOptions(false);
           };
         })
         .catch(err => {
           console.error('Error accessing camera:', err);
           showError('Camera Error', 'Could not access your camera. Please check permissions.');
+          setShowCameraOptions(false);
         });
     } else {
       showError('Camera Not Available', 'Your device does not support camera access');
+      setShowCameraOptions(false);
     }
   };
 
@@ -440,18 +441,24 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-16 mb-6">
             <div className="flex items-end">
               <div className="relative">
-                <img
-                  src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=6366f1&color=fff`}
-                  alt={profile.name || 'User'}
-                  className="w-32 h-32 rounded-2xl border-4 border-white shadow-lg object-cover cursor-pointer"
-                  onClick={handleAvatarClick}
-                />
+                {uploadingAvatar ? (
+                  <div className="w-32 h-32 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center bg-gray-100">
+                    <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  <img
+                    src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=6366f1&color=fff`}
+                    alt={profile.name || 'User'}
+                    className="w-32 h-32 rounded-2xl border-4 border-white shadow-lg object-cover cursor-pointer"
+                    onClick={handleAvatarClick}
+                  />
+                )}
                 {profile.verified && (
                   <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
                     <span className="text-white text-sm">✓</span>
                   </div>
                 )}
-                {isOwnProfile && (
+                {isOwnProfile && !uploadingAvatar && (
                   <div className="absolute bottom-0 right-0 left-0 bg-black/50 py-2 text-center text-white text-xs rounded-b-2xl">
                     <Camera className="w-4 h-4 mx-auto" />
                     <span>Change Photo</span>
@@ -473,15 +480,6 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
               {isOwnProfile ? (
                 <>
-                  <div className="relative group">
-                    <button 
-                      onClick={handleCapturePhoto}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center"
-                    >
-                      <Camera className="w-4 h-4 mr-2" />
-                      Take Photo
-                    </button>
-                  </div>
                   <button 
                     onClick={handleEditProfile}
                     className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center"
@@ -706,6 +704,45 @@ export function UserProfile({ userId, isOwnProfile = false }: UserProfileProps) 
           )}
         </div>
       </div>
+
+      {/* Camera Options Modal */}
+      {showCameraOptions && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Change Profile Picture</h3>
+            
+            <div className="space-y-4">
+              <button
+                onClick={() => {
+                  if (fileInputRef.current) {
+                    fileInputRef.current.click();
+                  }
+                }}
+                className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+              >
+                <Upload className="w-5 h-5 mr-2" />
+                Upload from Device
+              </button>
+              
+              <button
+                onClick={handleCapturePhoto}
+                className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+              >
+                <Camera className="w-5 h-5 mr-2" />
+                Take Photo with Camera
+              </button>
+              
+              <button
+                onClick={() => setShowCameraOptions(false)}
+                className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                <X className="w-5 h-5 mr-2" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

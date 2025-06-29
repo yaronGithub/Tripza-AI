@@ -19,6 +19,7 @@ export function SocialFeed() {
   const [comments, setComments] = useState<Record<string, PostComment[]>>({});
   const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
   const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     // Simulate a refresh when component mounts
@@ -194,6 +195,8 @@ export function SocialFeed() {
     
     if (!newComment.trim()) return;
     
+    setSubmittingComment(prev => ({ ...prev, [postId]: true }));
+    
     try {
       const comment = await addComment(postId, newComment);
       setComments(prev => ({
@@ -204,6 +207,8 @@ export function SocialFeed() {
     } catch (error) {
       console.error('Error adding comment:', error);
       showError('Comment Failed', 'Failed to add comment. Please try again.');
+    } finally {
+      setSubmittingComment(prev => ({ ...prev, [postId]: false }));
     }
   };
 
@@ -474,7 +479,7 @@ export function SocialFeed() {
               {user ? (
                 <div className="flex items-center space-x-2">
                   <img
-                    src={user?.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'User')}&background=6366f1&color=fff`}
+                    src={user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'User')}&background=6366f1&color=fff`}
                     alt={user?.user_metadata?.name || 'User'}
                     className="w-8 h-8 rounded-full object-cover"
                   />
@@ -493,10 +498,14 @@ export function SocialFeed() {
                     />
                     <button
                       onClick={() => handleAddComment(post.id)}
-                      disabled={!newComment.trim()}
+                      disabled={!newComment.trim() || submittingComment[post.id]}
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-700 disabled:text-gray-400"
                     >
-                      <Send className="w-5 h-5" />
+                      {submittingComment[post.id] ? (
+                        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
                 </div>
